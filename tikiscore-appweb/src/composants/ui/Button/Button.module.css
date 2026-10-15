@@ -1,0 +1,213 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-width: max-content;
+  min-height: 44px;
+  padding: 0 20px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.button:focus-visible {
+  outline: 3px solid rgb(21 156 91 / 25%);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+/* Bouton principal */
+
+.primary {
+  color: #ffffff;
+  background-color: #0d844b;
+  box-shadow: 0 8px 20px rgb(13 132 75 / 22%);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #0c693f;
+  box-shadow: 0 10px 24px rgb(13 132 75 / 28%);
+}
+
+.primary:active:not(:disabled) {
+  background-color: #0c5435;
+  box-shadow: 0 4px 10px rgb(13 132 75 / 20%);
+}
+
+/* Bouton secondaire */
+
+.secondary {
+  color: #18231d;
+  background-color: #ffffff;
+  border-color: #dce4df;
+  box-shadow: 0 1px 3px rgb(16 36 25 / 8%);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #edf4f0;
+  border-color: #bdc9c2;
+}
+
+.secondary:active:not(:disabled) {
+  background-color: #e3efe8;
+}
+
+/* Bouton dangereux */
+
+.danger {
+  color: #ffffff;
+  background-color: #d33145;
+  box-shadow: 0 8px 18px rgb(211 49 69 / 20%);
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #b72035;
+}
+
+.danger:active:not(:disabled) {
+  background-color: #991c2d;
+}
+
+.danger:focus-visible {
+  outline-color: rgb(211 49 69 / 25%);
+}
+
+/* Bouton transparent */
+
+.ghost {
+  color: #46544c;
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.ghost:hover:not(:disabled) {
+  color: #18231d;
+  background-color: #edf4f0;
+}
+
+.ghost:active:not(:disabled) {
+  background-color: #e3efe8;
+}
+
+/* Tailles */
+
+.small {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 12px;
+  border-radius: 9px;
+}
+
+.medium {
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+.large {
+  min-height: 52px;
+  padding: 0 26px;
+  font-size: 16px;
+  border-radius: 14px;
+}
+
+/* Largeur complète */
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Texte */
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Animation de chargement */
+
+.spinner {
+  width: 16px;
+  height: 16px;
+
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+
+  animation: button-spin 650ms linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .secondary {
+  color: #edf4ef;
+  background-color: #18231d;
+  border-color: #34443a;
+  box-shadow: none;
+}
+
+:global([data-theme="dark"]) .secondary:hover:not(:disabled) {
+  background-color: #223129;
+  border-color: #4b5d52;
+}
+
+:global([data-theme="dark"]) .ghost {
+  color: #b9c8bf;
+}
+
+:global([data-theme="dark"]) .ghost:hover:not(:disabled) {
+  color: #edf4ef;
+  background-color: #223129;
+}
+
+/* Accessibilité */
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .button:hover:not(:disabled) {
+    transform: none;
+  }
+}

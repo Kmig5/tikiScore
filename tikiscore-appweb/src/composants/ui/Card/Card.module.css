@@ -1,0 +1,307 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  color: #18231d;
+  background-color: #ffffff;
+
+  border: 1px solid transparent;
+  border-radius: 16px;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+/* Variantes */
+
+.default {
+  background-color: #ffffff;
+  border-color: #e8edea;
+  box-shadow: 0 2px 8px rgb(16 36 25 / 7%);
+}
+
+.outlined {
+  background-color: #ffffff;
+  border-color: #dce4df;
+  box-shadow: none;
+}
+
+.elevated {
+  background-color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 14px 34px rgb(16 36 25 / 13%);
+}
+
+.ghost {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Espacements */
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-small {
+  padding: 16px;
+}
+
+.padding-medium {
+  padding: 24px;
+}
+
+.padding-large {
+  padding: 32px;
+}
+
+/* Largeur */
+
+.fullWidth {
+  width: 100%;
+}
+
+/* En-tête */
+
+.header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.headerContent {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+
+  min-width: 0;
+}
+
+.heading {
+  min-width: 0;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  color: #0d844b;
+  background-color: #eefbf3;
+  border-radius: 12px;
+}
+
+.icon svg {
+  display: block;
+  width: 21px;
+  height: 21px;
+  pointer-events: none;
+}
+
+.title {
+  margin: 0;
+
+  color: #18231d;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  margin: 5px 0 0;
+
+  color: #6f7d75;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+}
+
+.headerAction {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Contenu */
+
+.body {
+  min-width: 0;
+  color: #46544c;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.body > :first-child {
+  margin-top: 0;
+}
+
+.body > :last-child {
+  margin-bottom: 0;
+}
+
+/* Pied de carte */
+
+.footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 18px;
+
+  border-top: 1px solid #e8edea;
+}
+
+/* Carte interactive */
+
+.interactive {
+  cursor: pointer;
+  user-select: none;
+}
+
+.interactive:hover {
+  border-color: #b3eac9;
+  box-shadow: 0 12px 28px rgb(13 132 75 / 13%);
+  transform: translateY(-2px);
+}
+
+.interactive:active {
+  box-shadow: 0 5px 14px rgb(13 132 75 / 11%);
+  transform: translateY(0);
+}
+
+.interactive:focus-visible {
+  outline: 3px solid rgb(21 156 91 / 22%);
+  outline-offset: 3px;
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .card {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .default {
+  background-color: #131c17;
+  border-color: #202d26;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 24%);
+}
+
+:global([data-theme="dark"]) .outlined {
+  background-color: #131c17;
+  border-color: #34443a;
+}
+
+:global([data-theme="dark"]) .elevated {
+  background-color: #18231d;
+  border-color: transparent;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 34%);
+}
+
+:global([data-theme="dark"]) .ghost {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+:global([data-theme="dark"]) .title {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .subtitle {
+  color: #8f9f96;
+}
+
+:global([data-theme="dark"]) .body {
+  color: #b9c8bf;
+}
+
+:global([data-theme="dark"]) .icon {
+  color: #7dd9a5;
+  background-color: rgb(65 191 123 / 13%);
+}
+
+:global([data-theme="dark"]) .footer {
+  border-top-color: #26342c;
+}
+
+:global([data-theme="dark"]) .interactive:hover {
+  border-color: rgb(65 191 123 / 42%);
+  box-shadow: 0 14px 32px rgb(0 0 0 / 32%);
+}
+
+:global([data-theme="dark"]) .interactive:focus-visible {
+  outline-color: rgb(65 191 123 / 30%);
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .padding-medium {
+    padding: 20px;
+  }
+
+  .padding-large {
+    padding: 24px;
+  }
+
+  .header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .headerContent {
+    gap: 12px;
+  }
+
+  .icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+}
+
+/* Réduction des animations */
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+
+  .interactive:hover,
+  .interactive:active {
+    transform: none;
+  }
+}

@@ -1,0 +1,812 @@
+/*
+ * TikiScore Design Tokens
+ *
+ * Ce fichier centralise toutes les variables visuelles utilisées
+ * dans l'application : couleurs, espacements, typographie,
+ * bordures, ombres, animations et niveaux de superposition.
+ *
+ * Ne pas écrire de styles de composants dans ce fichier.
+ */
+
+/* =========================================================
+   1. VARIABLES COMMUNES AUX DEUX THÈMES
+   ========================================================= */
+
+:root {
+  /* ---------------------------------------------------------
+     Typographie
+     --------------------------------------------------------- */
+
+  --font-family-sans:
+    Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --font-family-heading:
+    Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --font-family-mono:
+    "JetBrains Mono", "Fira Code", Consolas, monospace;
+
+  --font-size-2xs: 0.625rem;  /* 10px */
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-md: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem;  /* 36px */
+  --font-size-5xl: 3rem;     /* 48px */
+  --font-size-6xl: 3.75rem;  /* 60px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.65;
+  --line-height-loose: 1.8;
+
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+
+  /* ---------------------------------------------------------
+     Espacements
+     --------------------------------------------------------- */
+
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-7: 1.75rem;   /* 28px */
+  --space-8: 2rem;      /* 32px */
+  --space-9: 2.25rem;   /* 36px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-14: 3.5rem;   /* 56px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+
+  /* ---------------------------------------------------------
+     Dimensions d'interface
+     --------------------------------------------------------- */
+
+  --header-height: 4.5rem;
+  --mobile-header-height: 4rem;
+  --sidebar-width: 17rem;
+  --sidebar-collapsed-width: 5rem;
+
+  --container-xs: 30rem;
+  --container-sm: 40rem;
+  --container-md: 48rem;
+  --container-lg: 64rem;
+  --container-xl: 75rem;
+  --container-2xl: 87.5rem;
+
+  --content-max-width: 87.5rem;
+  --form-max-width: 30rem;
+  --modal-max-width: 36rem;
+
+  --input-height-sm: 2.25rem;
+  --input-height-md: 2.75rem;
+  --input-height-lg: 3.25rem;
+
+  --button-height-sm: 2.25rem;
+  --button-height-md: 2.75rem;
+  --button-height-lg: 3.25rem;
+
+  /* ---------------------------------------------------------
+     Bordures arrondies
+     --------------------------------------------------------- */
+
+  --radius-none: 0;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-full: 9999px;
+
+  --radius-input: var(--radius-lg);
+  --radius-button: var(--radius-lg);
+  --radius-card: var(--radius-xl);
+  --radius-modal: var(--radius-2xl);
+
+  /* ---------------------------------------------------------
+     Épaisseurs de bordure
+     --------------------------------------------------------- */
+
+  --border-width-1: 1px;
+  --border-width-2: 2px;
+  --border-width-4: 4px;
+
+  /* ---------------------------------------------------------
+     Animations
+     --------------------------------------------------------- */
+
+  --duration-instant: 75ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --transition-colors:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+
+  --transition-transform:
+    transform var(--duration-fast) var(--ease-standard);
+
+  --transition-theme:
+    color var(--duration-normal) var(--ease-standard),
+    background-color var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
+
+  /* ---------------------------------------------------------
+     Niveaux de superposition
+     --------------------------------------------------------- */
+
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-header: 300;
+  --z-sidebar: 400;
+  --z-overlay: 500;
+  --z-modal: 600;
+  --z-popover: 700;
+  --z-toast: 800;
+  --z-tooltip: 900;
+
+  /* ---------------------------------------------------------
+     Couleurs fixes de marque
+     --------------------------------------------------------- */
+
+  --brand-50: #eefbf3;
+  --brand-100: #d8f5e3;
+  --brand-200: #b3eac9;
+  --brand-300: #7dd9a5;
+  --brand-400: #41bf7b;
+  --brand-500: #159c5b;
+  --brand-600: #0d844b;
+  --brand-700: #0c693f;
+  --brand-800: #0c5435;
+  --brand-900: #0a452d;
+  --brand-950: #052719;
+
+  --accent-50: #fffbea;
+  --accent-100: #fff4c5;
+  --accent-200: #ffe989;
+  --accent-300: #ffda47;
+  --accent-400: #ffc91f;
+  --accent-500: #f5ad00;
+  --accent-600: #d68600;
+  --accent-700: #ad5f00;
+  --accent-800: #8c4a06;
+  --accent-900: #733d0b;
+
+  --red-50: #fff1f2;
+  --red-100: #ffe4e6;
+  --red-200: #fecdd3;
+  --red-300: #fda4af;
+  --red-400: #fb7185;
+  --red-500: #f43f5e;
+  --red-600: #e11d48;
+  --red-700: #be123c;
+  --red-800: #9f1239;
+  --red-900: #881337;
+
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+  --blue-900: #1e3a8a;
+
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-300: #fdba74;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+  --orange-800: #9a3412;
+  --orange-900: #7c2d12;
+
+  /* ---------------------------------------------------------
+     Couleurs métier du football
+     --------------------------------------------------------- */
+
+  --match-live: #ef4444;
+  --match-live-soft: #fee2e2;
+
+  --match-scheduled: #2563eb;
+  --match-scheduled-soft: #dbeafe;
+
+  --match-half-time: #f59e0b;
+  --match-half-time-soft: #fef3c7;
+
+  --match-finished: #64748b;
+  --match-finished-soft: #e2e8f0;
+
+  --match-postponed: #f97316;
+  --match-postponed-soft: #ffedd5;
+
+  --match-cancelled: #dc2626;
+  --match-cancelled-soft: #fee2e2;
+
+  --card-yellow: #facc15;
+  --card-red: #dc2626;
+
+  --goal-color: #16a34a;
+  --substitution-in: #16a34a;
+  --substitution-out: #dc2626;
+
+  /* ---------------------------------------------------------
+     Points de rupture documentaires
+     Utilisables comme référence, pas directement dans @media.
+     --------------------------------------------------------- */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+
+/* =========================================================
+   2. THÈME CLAIR PAR DÉFAUT
+   ========================================================= */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Fonds généraux */
+
+  --color-background: #f5f7f6;
+  --color-background-secondary: #eef2f0;
+  --color-background-elevated: #ffffff;
+  --color-background-inverse: #17211c;
+
+  /* Surfaces */
+
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f8faf9;
+  --color-surface-tertiary: #f0f4f2;
+  --color-surface-hover: #edf4f0;
+  --color-surface-active: #e3efe8;
+  --color-surface-disabled: #f1f3f2;
+  --color-surface-overlay: rgb(15 31 22 / 58%);
+
+  /* Texte */
+
+  --color-text: #18231d;
+  --color-text-secondary: #46544c;
+  --color-text-muted: #6f7d75;
+  --color-text-subtle: #94a099;
+  --color-text-disabled: #aab3ae;
+  --color-text-inverse: #ffffff;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-accent: #332500;
+
+  /* Couleur principale */
+
+  --color-primary: var(--brand-600);
+  --color-primary-hover: var(--brand-700);
+  --color-primary-active: var(--brand-800);
+  --color-primary-soft: var(--brand-50);
+  --color-primary-soft-hover: var(--brand-100);
+  --color-primary-border: var(--brand-200);
+  --color-primary-contrast: #ffffff;
+
+  /* Accent jaune */
+
+  --color-accent: var(--accent-400);
+  --color-accent-hover: var(--accent-500);
+  --color-accent-active: var(--accent-600);
+  --color-accent-soft: var(--accent-50);
+  --color-accent-border: var(--accent-200);
+  --color-accent-contrast: #302300;
+
+  /* Bordures */
+
+  --color-border: #dce4df;
+  --color-border-subtle: #e8edea;
+  --color-border-strong: #bdc9c2;
+  --color-border-focus: var(--brand-500);
+  --color-divider: #e3e9e5;
+
+  /* États */
+
+  --color-success: #14804a;
+  --color-success-hover: #0e6b3d;
+  --color-success-soft: #e9f8f0;
+  --color-success-border: #b8e7cc;
+  --color-success-text: #0c6338;
+
+  --color-warning: #b66a00;
+  --color-warning-hover: #945600;
+  --color-warning-soft: #fff7df;
+  --color-warning-border: #f8d889;
+  --color-warning-text: #865000;
+
+  --color-danger: #d33145;
+  --color-danger-hover: #b72035;
+  --color-danger-soft: #fff0f2;
+  --color-danger-border: #fac8ce;
+  --color-danger-text: #a91b2e;
+
+  --color-info: #2563d8;
+  --color-info-hover: #1d4fb1;
+  --color-info-soft: #edf5ff;
+  --color-info-border: #c5ddff;
+  --color-info-text: #174b9e;
+
+  /* Formulaires */
+
+  --color-input-background: #ffffff;
+  --color-input-background-hover: #fbfcfb;
+  --color-input-background-disabled: #f0f3f1;
+  --color-input-border: #cfd9d3;
+  --color-input-border-hover: #aebdb4;
+  --color-input-placeholder: #929e97;
+
+  /* Navigation */
+
+  --color-header-background: rgb(255 255 255 / 92%);
+  --color-sidebar-background: #102a1e;
+  --color-sidebar-surface: #173626;
+  --color-sidebar-text: #d5e3da;
+  --color-sidebar-text-muted: #91a89a;
+  --color-sidebar-item-hover: rgb(255 255 255 / 8%);
+  --color-sidebar-item-active: var(--brand-600);
+  --color-sidebar-item-active-text: #ffffff;
+
+  /* Tableaux */
+
+  --color-table-header: #f1f5f3;
+  --color-table-row: #ffffff;
+  --color-table-row-alternate: #fafcfb;
+  --color-table-row-hover: #f0f7f3;
+  --color-table-border: #e2e8e4;
+
+  /* Squelettes et chargement */
+
+  --color-skeleton-base: #e4e9e6;
+  --color-skeleton-highlight: #f3f6f4;
+
+  /* Focus */
+
+  --focus-ring:
+    0 0 0 3px rgb(21 156 91 / 18%);
+
+  --focus-ring-danger:
+    0 0 0 3px rgb(211 49 69 / 16%);
+
+  /* Ombres */
+
+  --shadow-xs:
+    0 1px 2px rgb(16 36 25 / 5%);
+
+  --shadow-sm:
+    0 2px 6px rgb(16 36 25 / 7%);
+
+  --shadow-md:
+    0 8px 20px rgb(16 36 25 / 9%);
+
+  --shadow-lg:
+    0 16px 40px rgb(16 36 25 / 12%);
+
+  --shadow-xl:
+    0 24px 64px rgb(16 36 25 / 16%);
+
+  --shadow-primary:
+    0 12px 28px rgb(13 132 75 / 22%);
+
+  --shadow-modal:
+    0 24px 80px rgb(12 31 20 / 24%);
+
+  /* Dégradés */
+
+  --gradient-brand:
+    linear-gradient(
+      135deg,
+      var(--brand-700) 0%,
+      var(--brand-500) 100%
+    );
+
+  --gradient-hero:
+    linear-gradient(
+      145deg,
+      #074a30 0%,
+      #0d844b 55%,
+      #16a765 100%
+    );
+
+  --gradient-accent:
+    linear-gradient(
+      135deg,
+      var(--accent-300) 0%,
+      var(--accent-500) 100%
+    );
+
+  --gradient-surface:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #f8faf9 100%
+    );
+}
+
+
+/* =========================================================
+   3. THÈME SOMBRE
+   ========================================================= */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Fonds généraux */
+
+  --color-background: #0b110e;
+  --color-background-secondary: #101813;
+  --color-background-elevated: #17211b;
+  --color-background-inverse: #f2f6f3;
+
+  /* Surfaces */
+
+  --color-surface: #131c17;
+  --color-surface-secondary: #18231d;
+  --color-surface-tertiary: #1e2b24;
+  --color-surface-hover: #223129;
+  --color-surface-active: #293c31;
+  --color-surface-disabled: #1a211d;
+  --color-surface-overlay: rgb(0 0 0 / 72%);
+
+  /* Texte */
+
+  --color-text: #edf4ef;
+  --color-text-secondary: #b9c8bf;
+  --color-text-muted: #8f9f96;
+  --color-text-subtle: #6f7d75;
+  --color-text-disabled: #59665f;
+  --color-text-inverse: #152019;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-accent: #302300;
+
+  /* Couleur principale */
+
+  --color-primary: var(--brand-400);
+  --color-primary-hover: var(--brand-300);
+  --color-primary-active: var(--brand-200);
+  --color-primary-soft: rgb(65 191 123 / 13%);
+  --color-primary-soft-hover: rgb(65 191 123 / 20%);
+  --color-primary-border: rgb(65 191 123 / 35%);
+  --color-primary-contrast: #082617;
+
+  /* Accent jaune */
+
+  --color-accent: var(--accent-300);
+  --color-accent-hover: var(--accent-200);
+  --color-accent-active: var(--accent-100);
+  --color-accent-soft: rgb(255 218 71 / 12%);
+  --color-accent-border: rgb(255 218 71 / 30%);
+  --color-accent-contrast: #2d2100;
+
+  /* Bordures */
+
+  --color-border: #29372f;
+  --color-border-subtle: #202d26;
+  --color-border-strong: #3d4d43;
+  --color-border-focus: var(--brand-400);
+  --color-divider: #26342c;
+
+  /* États */
+
+  --color-success: #4bd18a;
+  --color-success-hover: #73dda4;
+  --color-success-soft: rgb(75 209 138 / 12%);
+  --color-success-border: rgb(75 209 138 / 30%);
+  --color-success-text: #82e5ae;
+
+  --color-warning: #f7b94c;
+  --color-warning-hover: #fac96d;
+  --color-warning-soft: rgb(247 185 76 / 12%);
+  --color-warning-border: rgb(247 185 76 / 30%);
+  --color-warning-text: #ffd27e;
+
+  --color-danger: #fb7185;
+  --color-danger-hover: #fda4af;
+  --color-danger-soft: rgb(251 113 133 / 12%);
+  --color-danger-border: rgb(251 113 133 / 30%);
+  --color-danger-text: #fda4af;
+
+  --color-info: #60a5fa;
+  --color-info-hover: #93c5fd;
+  --color-info-soft: rgb(96 165 250 / 12%);
+  --color-info-border: rgb(96 165 250 / 30%);
+  --color-info-text: #93c5fd;
+
+  /* Formulaires */
+
+  --color-input-background: #101813;
+  --color-input-background-hover: #151f19;
+  --color-input-background-disabled: #151b17;
+  --color-input-border: #34443a;
+  --color-input-border-hover: #4b5d52;
+  --color-input-placeholder: #68776f;
+
+  /* Navigation */
+
+  --color-header-background: rgb(11 17 14 / 90%);
+  --color-sidebar-background: #09130d;
+  --color-sidebar-surface: #122319;
+  --color-sidebar-text: #d5e3da;
+  --color-sidebar-text-muted: #80948a;
+  --color-sidebar-item-hover: rgb(255 255 255 / 7%);
+  --color-sidebar-item-active: var(--brand-500);
+  --color-sidebar-item-active-text: #ffffff;
+
+  /* Tableaux */
+
+  --color-table-header: #1a251f;
+  --color-table-row: #131c17;
+  --color-table-row-alternate: #151f19;
+  --color-table-row-hover: #1c2a22;
+  --color-table-border: #28362e;
+
+  /* Squelettes et chargement */
+
+  --color-skeleton-base: #202b25;
+  --color-skeleton-highlight: #2b3931;
+
+  /* Focus */
+
+  --focus-ring:
+    0 0 0 3px rgb(65 191 123 / 22%);
+
+  --focus-ring-danger:
+    0 0 0 3px rgb(251 113 133 / 20%);
+
+  /* Ombres */
+
+  --shadow-xs:
+    0 1px 2px rgb(0 0 0 / 22%);
+
+  --shadow-sm:
+    0 3px 8px rgb(0 0 0 / 24%);
+
+  --shadow-md:
+    0 10px 24px rgb(0 0 0 / 28%);
+
+  --shadow-lg:
+    0 18px 48px rgb(0 0 0 / 34%);
+
+  --shadow-xl:
+    0 28px 72px rgb(0 0 0 / 42%);
+
+  --shadow-primary:
+    0 12px 30px rgb(21 156 91 / 18%);
+
+  --shadow-modal:
+    0 28px 90px rgb(0 0 0 / 58%);
+
+  /* Dégradés */
+
+  --gradient-brand:
+    linear-gradient(
+      135deg,
+      var(--brand-600) 0%,
+      var(--brand-400) 100%
+    );
+
+  --gradient-hero:
+    linear-gradient(
+      145deg,
+      #061a10 0%,
+      #0a3b24 55%,
+      #0d693d 100%
+    );
+
+  --gradient-accent:
+    linear-gradient(
+      135deg,
+      var(--accent-400) 0%,
+      var(--accent-600) 100%
+    );
+
+  --gradient-surface:
+    linear-gradient(
+      180deg,
+      #18231d 0%,
+      #121a16 100%
+    );
+}
+
+
+/* =========================================================
+   4. THÈME AUTOMATIQUE SELON LE SYSTÈME
+   Appliqué uniquement si aucun data-theme n'est défini.
+   ========================================================= */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --color-background: #0b110e;
+    --color-background-secondary: #101813;
+    --color-background-elevated: #17211b;
+    --color-background-inverse: #f2f6f3;
+
+    --color-surface: #131c17;
+    --color-surface-secondary: #18231d;
+    --color-surface-tertiary: #1e2b24;
+    --color-surface-hover: #223129;
+    --color-surface-active: #293c31;
+    --color-surface-disabled: #1a211d;
+    --color-surface-overlay: rgb(0 0 0 / 72%);
+
+    --color-text: #edf4ef;
+    --color-text-secondary: #b9c8bf;
+    --color-text-muted: #8f9f96;
+    --color-text-subtle: #6f7d75;
+    --color-text-disabled: #59665f;
+    --color-text-inverse: #152019;
+    --color-text-on-primary: #ffffff;
+    --color-text-on-accent: #302300;
+
+    --color-primary: var(--brand-400);
+    --color-primary-hover: var(--brand-300);
+    --color-primary-active: var(--brand-200);
+    --color-primary-soft: rgb(65 191 123 / 13%);
+    --color-primary-soft-hover: rgb(65 191 123 / 20%);
+    --color-primary-border: rgb(65 191 123 / 35%);
+    --color-primary-contrast: #082617;
+
+    --color-accent: var(--accent-300);
+    --color-accent-hover: var(--accent-200);
+    --color-accent-active: var(--accent-100);
+    --color-accent-soft: rgb(255 218 71 / 12%);
+    --color-accent-border: rgb(255 218 71 / 30%);
+    --color-accent-contrast: #2d2100;
+
+    --color-border: #29372f;
+    --color-border-subtle: #202d26;
+    --color-border-strong: #3d4d43;
+    --color-border-focus: var(--brand-400);
+    --color-divider: #26342c;
+
+    --color-success: #4bd18a;
+    --color-success-hover: #73dda4;
+    --color-success-soft: rgb(75 209 138 / 12%);
+    --color-success-border: rgb(75 209 138 / 30%);
+    --color-success-text: #82e5ae;
+
+    --color-warning: #f7b94c;
+    --color-warning-hover: #fac96d;
+    --color-warning-soft: rgb(247 185 76 / 12%);
+    --color-warning-border: rgb(247 185 76 / 30%);
+    --color-warning-text: #ffd27e;
+
+    --color-danger: #fb7185;
+    --color-danger-hover: #fda4af;
+    --color-danger-soft: rgb(251 113 133 / 12%);
+    --color-danger-border: rgb(251 113 133 / 30%);
+    --color-danger-text: #fda4af;
+
+    --color-info: #60a5fa;
+    --color-info-hover: #93c5fd;
+    --color-info-soft: rgb(96 165 250 / 12%);
+    --color-info-border: rgb(96 165 250 / 30%);
+    --color-info-text: #93c5fd;
+
+    --color-input-background: #101813;
+    --color-input-background-hover: #151f19;
+    --color-input-background-disabled: #151b17;
+    --color-input-border: #34443a;
+    --color-input-border-hover: #4b5d52;
+    --color-input-placeholder: #68776f;
+
+    --color-header-background: rgb(11 17 14 / 90%);
+    --color-sidebar-background: #09130d;
+    --color-sidebar-surface: #122319;
+    --color-sidebar-text: #d5e3da;
+    --color-sidebar-text-muted: #80948a;
+    --color-sidebar-item-hover: rgb(255 255 255 / 7%);
+    --color-sidebar-item-active: var(--brand-500);
+    --color-sidebar-item-active-text: #ffffff;
+
+    --color-table-header: #1a251f;
+    --color-table-row: #131c17;
+    --color-table-row-alternate: #151f19;
+    --color-table-row-hover: #1c2a22;
+    --color-table-border: #28362e;
+
+    --color-skeleton-base: #202b25;
+    --color-skeleton-highlight: #2b3931;
+
+    --focus-ring:
+      0 0 0 3px rgb(65 191 123 / 22%);
+
+    --focus-ring-danger:
+      0 0 0 3px rgb(251 113 133 / 20%);
+
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 22%);
+    --shadow-sm: 0 3px 8px rgb(0 0 0 / 24%);
+    --shadow-md: 0 10px 24px rgb(0 0 0 / 28%);
+    --shadow-lg: 0 18px 48px rgb(0 0 0 / 34%);
+    --shadow-xl: 0 28px 72px rgb(0 0 0 / 42%);
+    --shadow-primary: 0 12px 30px rgb(21 156 91 / 18%);
+    --shadow-modal: 0 28px 90px rgb(0 0 0 / 58%);
+
+    --gradient-brand:
+      linear-gradient(
+        135deg,
+        var(--brand-600) 0%,
+        var(--brand-400) 100%
+      );
+
+    --gradient-hero:
+      linear-gradient(
+        145deg,
+        #061a10 0%,
+        #0a3b24 55%,
+        #0d693d 100%
+      );
+
+    --gradient-accent:
+      linear-gradient(
+        135deg,
+        var(--accent-400) 0%,
+        var(--accent-600) 100%
+      );
+
+    --gradient-surface:
+      linear-gradient(
+        180deg,
+        #18231d 0%,
+        #121a16 100%
+      );
+  }
+}
+
+
+/* =========================================================
+   5. ACCESSIBILITÉ
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-slower: 0ms;
+  }
+}

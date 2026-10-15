@@ -1,0 +1,230 @@
+.alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+
+  width: 100%;
+  padding: 14px 16px;
+
+  font-family: inherit;
+
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+
+/* Contenu */
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 4px;
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.message {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+
+  overflow-wrap: anywhere;
+}
+
+.message p {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.message p:last-child {
+  margin-bottom: 0;
+}
+
+/* Icône */
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+}
+
+.icon svg {
+  display: block;
+  width: 21px;
+  height: 21px;
+  pointer-events: none;
+}
+
+/* Bouton de fermeture */
+
+.dismissButton {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+  margin: -4px -6px -4px 0;
+  padding: 0;
+
+  color: currentcolor;
+  background-color: transparent;
+
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  opacity: 0.75;
+
+  transition:
+    opacity 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.dismissButton:hover {
+  background-color: rgb(0 0 0 / 7%);
+  opacity: 1;
+}
+
+.dismissButton:active {
+  transform: scale(0.93);
+}
+
+.dismissButton:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: 2px;
+}
+
+/* Succès */
+
+.success {
+  color: #0c6338;
+  background-color: #e9f8f0;
+  border-color: #b8e7cc;
+}
+
+.success .icon {
+  color: #14804a;
+}
+
+/* Erreur */
+
+.error {
+  color: #a91b2e;
+  background-color: #fff0f2;
+  border-color: #fac8ce;
+}
+
+.error .icon {
+  color: #d33145;
+}
+
+/* Avertissement */
+
+.warning {
+  color: #865000;
+  background-color: #fff7df;
+  border-color: #f8d889;
+}
+
+.warning .icon {
+  color: #b66a00;
+}
+
+/* Information */
+
+.info {
+  color: #174b9e;
+  background-color: #edf5ff;
+  border-color: #c5ddff;
+}
+
+.info .icon {
+  color: #2563d8;
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .success {
+  color: #82e5ae;
+  background-color: rgb(75 209 138 / 12%);
+  border-color: rgb(75 209 138 / 30%);
+}
+
+:global([data-theme="dark"]) .success .icon {
+  color: #4bd18a;
+}
+
+:global([data-theme="dark"]) .error {
+  color: #fda4af;
+  background-color: rgb(251 113 133 / 12%);
+  border-color: rgb(251 113 133 / 30%);
+}
+
+:global([data-theme="dark"]) .error .icon {
+  color: #fb7185;
+}
+
+:global([data-theme="dark"]) .warning {
+  color: #ffd27e;
+  background-color: rgb(247 185 76 / 12%);
+  border-color: rgb(247 185 76 / 30%);
+}
+
+:global([data-theme="dark"]) .warning .icon {
+  color: #f7b94c;
+}
+
+:global([data-theme="dark"]) .info {
+  color: #93c5fd;
+  background-color: rgb(96 165 250 / 12%);
+  border-color: rgb(96 165 250 / 30%);
+}
+
+:global([data-theme="dark"]) .info .icon {
+  color: #60a5fa;
+}
+
+:global([data-theme="dark"]) .dismissButton:hover {
+  background-color: rgb(255 255 255 / 8%);
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+  .alert {
+    gap: 10px;
+    padding: 13px 14px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+
+  .message {
+    font-size: 12px;
+  }
+}
+
+/* Accessibilité */
+
+@media (prefers-reduced-motion: reduce) {
+  .dismissButton {
+    transition: none;
+  }
+
+  .dismissButton:active {
+    transform: none;
+  }
+}

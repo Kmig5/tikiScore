@@ -1,0 +1,547 @@
+.viewport {
+  position: fixed;
+
+  top: max(
+    12px,
+    env(safe-area-inset-top)
+  );
+
+  left: 50%;
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  width: min(
+    400px,
+    calc(
+      100vw -
+      24px -
+      env(safe-area-inset-left) -
+      env(safe-area-inset-right)
+    )
+  );
+
+  pointer-events: none;
+
+  transform: translateX(-50%);
+}
+
+.toast {
+  position: relative;
+
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+
+  width: 100%;
+  min-height: 72px;
+  padding: 15px 44px 16px 16px;
+  overflow: hidden;
+
+  color: #18231d;
+  background-color: #ffffff;
+
+  border: 1px solid #e1e8e4;
+  border-radius: 14px;
+
+  box-shadow:
+    0 16px 38px rgb(16 36 25 / 16%),
+    0 3px 10px rgb(16 36 25 / 8%);
+
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+
+  animation: toast-enter 280ms ease-out;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.toast:hover {
+  box-shadow:
+    0 20px 46px rgb(16 36 25 / 20%),
+    0 4px 12px rgb(16 36 25 / 10%);
+
+  transform: translateY(-2px);
+}
+
+.toast:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Contenu */
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.title {
+  margin: 0 0 4px;
+
+  color: #18231d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  overflow-wrap: anywhere;
+}
+
+.message {
+  margin: 0;
+
+  color: #5d6a63;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
+}
+
+/* Icône */
+
+.iconContainer {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+
+  border-radius: 11px;
+}
+
+.iconContainer svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* Bouton de fermeture */
+
+.closeButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  color: #77837c;
+  background-color: transparent;
+
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.closeButton:hover {
+  color: #25342c;
+  background-color: #eef2f0;
+}
+
+.closeButton:active {
+  transform: scale(0.92);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid #159c5b;
+  outline-offset: 2px;
+}
+
+.closeButton svg {
+  pointer-events: none;
+}
+
+/* Barre de progression */
+
+.progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  height: 3px;
+
+  background-color: currentcolor;
+  opacity: 0.65;
+
+  transform-origin: left center;
+
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-play-state: running;
+}
+
+/* Pause de la barre au survol */
+
+.paused .progress {
+  animation-play-state: paused;
+}
+
+/* Variante succès */
+
+.success {
+  border-left: 4px solid #159c5b;
+}
+
+.success .iconContainer {
+  color: #0d844b;
+  background-color: #e9f8f0;
+}
+
+.success .progress {
+  color: #159c5b;
+}
+
+/* Variante erreur */
+
+.error {
+  border-left: 4px solid #d33145;
+}
+
+.error .iconContainer {
+  color: #d33145;
+  background-color: #fff0f2;
+}
+
+.error .progress {
+  color: #d33145;
+}
+
+/* Variante avertissement */
+
+.warning {
+  border-left: 4px solid #d68600;
+}
+
+.warning .iconContainer {
+  color: #b66a00;
+  background-color: #fff7df;
+}
+
+.warning .progress {
+  color: #d68600;
+}
+
+/* Variante information */
+
+.info {
+  border-left: 4px solid #2563d8;
+}
+
+.info .iconContainer {
+  color: #2563d8;
+  background-color: #edf5ff;
+}
+
+.info .progress {
+  color: #2563d8;
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .toast {
+  color: #edf4ef;
+  background-color: #18231d;
+  border-color: #29372f;
+
+  box-shadow:
+    0 18px 44px rgb(0 0 0 / 42%),
+    0 4px 12px rgb(0 0 0 / 26%);
+}
+
+:global([data-theme="dark"]) .toast:hover {
+  box-shadow:
+    0 22px 52px rgb(0 0 0 / 52%),
+    0 5px 14px rgb(0 0 0 / 30%);
+}
+
+:global([data-theme="dark"]) .title {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .message {
+  color: #b9c8bf;
+}
+
+:global([data-theme="dark"]) .closeButton {
+  color: #8f9f96;
+}
+
+:global([data-theme="dark"]) .closeButton:hover {
+  color: #edf4ef;
+  background-color: #293c31;
+}
+
+:global([data-theme="dark"]) .closeButton:focus-visible {
+  outline-color: #41bf7b;
+}
+
+:global([data-theme="dark"]) .success .iconContainer {
+  color: #82e5ae;
+  background-color: rgb(75 209 138 / 13%);
+}
+
+:global([data-theme="dark"]) .error .iconContainer {
+  color: #fda4af;
+  background-color: rgb(251 113 133 / 13%);
+}
+
+:global([data-theme="dark"]) .warning .iconContainer {
+  color: #ffd27e;
+  background-color: rgb(247 185 76 / 13%);
+}
+
+:global([data-theme="dark"]) .info .iconContainer {
+  color: #93c5fd;
+  background-color: rgb(96 165 250 / 13%);
+}
+
+/* Animation d’entrée */
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animation de la durée restante */
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Adaptation mobile */
+
+/* Mobile first */
+
+@media (max-width: 600px) {
+  .viewport {
+    top: max(
+      10px,
+      env(safe-area-inset-top)
+    );
+
+    gap: 8px;
+
+    width: calc(
+      100vw -
+      20px -
+      env(safe-area-inset-left) -
+      env(safe-area-inset-right)
+    );
+
+    max-width: none;
+  }
+
+  .toast {
+    gap: 10px;
+
+    width: 100%;
+    min-height: 68px;
+
+    padding:
+      13px
+      48px
+      14px
+      13px;
+
+    border-radius: 12px;
+
+    box-shadow:
+      0 12px 30px rgb(16 36 25 / 18%),
+      0 2px 8px rgb(16 36 25 / 9%);
+
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .toast:hover {
+    transform: none;
+  }
+
+  .toast:active {
+    transform: scale(0.985);
+  }
+
+  .iconContainer {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 10px;
+  }
+
+  .iconContainer svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .content {
+    padding-top: 0;
+  }
+
+  .title {
+    margin-bottom: 3px;
+
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .message {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .closeButton {
+    top: 50%;
+    right: 4px;
+
+    width: 44px;
+    height: 44px;
+
+    transform: translateY(-50%);
+  }
+
+  .closeButton:active {
+    transform:
+      translateY(-50%)
+      scale(0.92);
+  }
+
+  .progress {
+    height: 3px;
+  }
+}
+
+@media (max-width: 360px) {
+  .viewport {
+    width: calc(
+      100vw -
+      16px -
+      env(safe-area-inset-left) -
+      env(safe-area-inset-right)
+    );
+  }
+
+  .toast {
+    gap: 8px;
+
+    min-height: 64px;
+
+    padding:
+      11px
+      46px
+      12px
+      11px;
+  }
+
+  .iconContainer {
+    width: 32px;
+    height: 32px;
+  }
+
+  .iconContainer svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .title {
+    font-size: 12px;
+  }
+
+  .message {
+    font-size: 11px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .toast:hover {
+    transform: none;
+  }
+
+  .toast:active {
+    transform: scale(0.985);
+  }
+
+  .closeButton:hover {
+    color: #77837c;
+    background-color: transparent;
+  }
+
+  .closeButton:active {
+    color: #25342c;
+    background-color: #eef2f0;
+  }
+
+  :global([data-theme="dark"])
+    .closeButton:hover {
+    color: #8f9f96;
+    background-color: transparent;
+  }
+
+  :global([data-theme="dark"])
+    .closeButton:active {
+    color: #edf4ef;
+    background-color: #293c31;
+  }
+}
+
+/* Réduction des animations */
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+    transition: none;
+  }
+
+  .toast:hover,
+  .toast:active {
+    transform: none;
+  }
+
+  .progress {
+    display: none;
+    animation: none;
+  }
+
+  .closeButton {
+    transition: none;
+  }
+
+  .closeButton:active {
+    transform: none;
+  }
+}

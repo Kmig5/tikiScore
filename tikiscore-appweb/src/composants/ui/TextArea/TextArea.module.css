@@ -1,0 +1,446 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Label */
+
+.label {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+
+  width: fit-content;
+
+  color: #25342c;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.required {
+  color: #d33145;
+  font-weight: 700;
+}
+
+/* Zone de texte */
+
+.textArea {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+
+  color: #18231d;
+  background-color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
+
+  border: 1px solid #cfd9d3;
+  border-radius: 12px;
+  outline: none;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.textArea::placeholder {
+  color: #929e97;
+  opacity: 1;
+}
+
+.textArea:hover:not(:disabled):not(:read-only) {
+  background-color: #fbfcfb;
+  border-color: #aebdb4;
+}
+
+.textArea:focus {
+  background-color: #ffffff;
+  border-color: #159c5b;
+
+  box-shadow:
+    0 0 0 3px rgb(21 156 91 / 16%);
+}
+
+/* Tailles */
+
+.small {
+  min-height: 80px;
+  padding: 10px 12px;
+
+  font-size: 12px;
+
+  border-radius: 9px;
+}
+
+.medium {
+  min-height: 112px;
+  padding: 12px 14px;
+
+  font-size: 14px;
+
+  border-radius: 12px;
+}
+
+.large {
+  min-height: 160px;
+  padding: 14px 16px;
+
+  font-size: 16px;
+
+  border-radius: 14px;
+}
+
+/* Redimensionnement */
+
+.resize-none {
+  resize: none;
+}
+
+.resize-vertical {
+  resize: vertical;
+}
+
+.resize-horizontal {
+  resize: horizontal;
+}
+
+.resize-both {
+  resize: both;
+}
+
+/* Erreur */
+
+.hasError {
+  border-color: #d33145;
+}
+
+.hasError:hover:not(:disabled) {
+  border-color: #b72035;
+}
+
+.hasError:focus {
+  border-color: #d33145;
+
+  box-shadow:
+    0 0 0 3px rgb(211 49 69 / 16%);
+}
+
+/* Pied du composant */
+
+.footer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  min-height: 18px;
+}
+
+.messageContainer {
+  flex: 1;
+  min-width: 0;
+}
+
+.helperText {
+  margin: 0;
+
+  color: #6f7d75;
+
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.errorMessage {
+  margin: 0;
+
+  color: #b72035;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Compteur */
+
+.characterCount {
+  flex: 0 0 auto;
+
+  color: #7e8a83;
+
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+
+  white-space: nowrap;
+}
+
+.limitReached {
+  color: #d33145;
+  font-weight: 600;
+}
+
+/* État désactivé */
+
+.disabled .label {
+  color: #8d9992;
+}
+
+.textArea:disabled {
+  color: #8d9992;
+  background-color: #f0f3f1;
+  border-color: #e0e6e2;
+
+  cursor: not-allowed;
+}
+
+.textArea:disabled::placeholder {
+  color: #aab3ae;
+}
+
+.disabled .helperText,
+.disabled .characterCount {
+  color: #aab3ae;
+}
+
+/* Lecture seule */
+
+.textArea:read-only {
+  color: #56635c;
+  background-color: #f7f9f8;
+
+  cursor: default;
+}
+
+.textArea:read-only:focus {
+  border-color: #cfd9d3;
+  box-shadow: none;
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .label {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .textArea {
+  color: #edf4ef;
+  background-color: #101813;
+  border-color: #34443a;
+}
+
+:global([data-theme="dark"]) .textArea::placeholder {
+  color: #78867e;
+}
+
+:global([data-theme="dark"])
+  .textArea:hover:not(:disabled):not(:read-only) {
+  background-color: #151f19;
+  border-color: #4b5d52;
+}
+
+:global([data-theme="dark"]) .textArea:focus {
+  color: #edf4ef;
+  background-color: #101813;
+  border-color: #41bf7b;
+
+  box-shadow:
+    0 0 0 3px rgb(65 191 123 / 20%);
+}
+
+:global([data-theme="dark"]) .hasError {
+  border-color: #fb7185;
+}
+
+:global([data-theme="dark"]) .hasError:hover:not(:disabled) {
+  border-color: #fda4af;
+}
+
+:global([data-theme="dark"]) .hasError:focus {
+  border-color: #fb7185;
+
+  box-shadow:
+    0 0 0 3px rgb(251 113 133 / 20%);
+}
+
+:global([data-theme="dark"]) .helperText {
+  color: #9aa9a1;
+}
+
+:global([data-theme="dark"]) .errorMessage {
+  color: #fda4af;
+}
+
+:global([data-theme="dark"]) .characterCount {
+  color: #9aa9a1;
+}
+
+:global([data-theme="dark"]) .limitReached {
+  color: #fb7185;
+}
+
+:global([data-theme="dark"]) .disabled .label {
+  color: #66736c;
+}
+
+:global([data-theme="dark"]) .textArea:disabled {
+  color: #66736c;
+  background-color: #151b17;
+  border-color: #29342d;
+}
+
+:global([data-theme="dark"])
+  .textArea:disabled::placeholder {
+  color: #59665f;
+}
+
+:global([data-theme="dark"]) .textArea:read-only {
+  color: #a6b5ad;
+  background-color: #151f19;
+  border-color: #34443a;
+}
+
+:global([data-theme="dark"])
+  .textArea:read-only:focus {
+  border-color: #34443a;
+  box-shadow: none;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .container {
+    gap: 6px;
+  }
+
+  .label {
+    font-size: 13px;
+  }
+
+  /*
+   * 16 px évite le zoom automatique au focus
+   * dans plusieurs navigateurs mobiles.
+   */
+  .small,
+  .medium,
+  .large {
+    width: 100%;
+    max-width: 100%;
+
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .small {
+    min-height: 80px;
+    padding: 10px 12px;
+    border-radius: 9px;
+  }
+
+  .medium {
+    min-height: 104px;
+    padding: 11px 13px;
+    border-radius: 12px;
+  }
+
+  .large {
+    min-height: 144px;
+    padding: 13px 14px;
+    border-radius: 14px;
+  }
+
+  /*
+   * Sur téléphone, le redimensionnement horizontal
+   * pourrait déborder de l’écran.
+   */
+  .resize-horizontal,
+  .resize-both {
+    resize: vertical;
+  }
+
+  .footer {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .helperText,
+  .errorMessage {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .characterCount {
+    font-size: 10px;
+  }
+}
+
+/* Très petits téléphones */
+
+@media (max-width: 360px) {
+  .small,
+  .medium,
+  .large {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+  }
+
+  .messageContainer {
+    flex-basis: 100%;
+  }
+
+  .characterCount {
+    margin-left: auto;
+  }
+}
+
+/* Appareils tactiles */
+
+@media (hover: none) and (pointer: coarse) {
+  .textArea:hover:not(:disabled):not(:read-only) {
+    background-color: #ffffff;
+    border-color: #cfd9d3;
+  }
+
+  .textArea:focus {
+    background-color: #ffffff;
+    border-color: #159c5b;
+  }
+
+  :global([data-theme="dark"])
+    .textArea:hover:not(:disabled):not(:read-only) {
+    background-color: #101813;
+    border-color: #34443a;
+  }
+
+  :global([data-theme="dark"]) .textArea:focus {
+    background-color: #101813;
+    border-color: #41bf7b;
+  }
+}
+
+/* Accessibilité */
+
+@media (prefers-reduced-motion: reduce) {
+  .textArea {
+    transition: none;
+  }
+}

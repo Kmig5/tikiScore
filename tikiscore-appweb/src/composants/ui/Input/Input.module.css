@@ -1,0 +1,320 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Label */
+
+.label {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+
+  width: fit-content;
+
+  color: #25342c;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.required {
+  color: #d33145;
+  font-weight: 700;
+}
+
+/* Conteneur de l'input */
+
+.inputWrapper {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  background-color: #ffffff;
+  border: 1px solid #cfd9d3;
+  border-radius: 12px;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.inputWrapper:hover:not(.wrapperDisabled) {
+  border-color: #aebdb4;
+}
+
+.inputWrapper:focus-within {
+  border-color: #159c5b;
+  box-shadow: 0 0 0 3px rgb(21 156 91 / 16%);
+}
+
+/* Champ natif */
+
+.input {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 14px;
+
+  color: #18231d;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  background-color: transparent;
+  border: 0;
+  border-radius: inherit;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #929e97;
+  opacity: 1;
+}
+
+/*
+ * Permet de conserver la couleur du texte dans certains navigateurs
+ * lorsqu'un champ est automatiquement rempli.
+ */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #18231d;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Tailles */
+
+.small {
+  min-height: 36px;
+  border-radius: 9px;
+}
+
+.small .input {
+  padding-right: 12px;
+  padding-left: 12px;
+  font-size: 12px;
+}
+
+.medium {
+  min-height: 44px;
+  border-radius: 12px;
+}
+
+.medium .input {
+  padding-right: 14px;
+  padding-left: 14px;
+  font-size: 14px;
+}
+
+.large {
+  min-height: 52px;
+  border-radius: 14px;
+}
+
+.large .input {
+  padding-right: 16px;
+  padding-left: 16px;
+  font-size: 16px;
+}
+
+/* Éléments à gauche et à droite */
+
+.leftElement,
+.rightElement {
+  position: absolute;
+  top: 50%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #78857e;
+
+  transform: translateY(-50%);
+}
+
+.leftElement {
+  left: 14px;
+}
+
+.rightElement {
+  right: 14px;
+}
+
+.hasLeftElement {
+  padding-left: 42px;
+}
+
+.hasRightElement {
+  padding-right: 42px;
+}
+
+/* Erreur */
+
+.hasError {
+  border-color: #d33145;
+}
+
+.hasError:hover {
+  border-color: #b72035;
+}
+
+.hasError:focus-within {
+  border-color: #d33145;
+  box-shadow: 0 0 0 3px rgb(211 49 69 / 16%);
+}
+
+.errorMessage {
+  margin: 0;
+
+  color: #b72035;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* Texte d'aide */
+
+.helperText {
+  margin: 0;
+
+  color: #6f7d75;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* État désactivé */
+
+.wrapperDisabled {
+  background-color: #f0f3f1;
+  border-color: #e0e6e2;
+}
+
+.wrapperDisabled:hover {
+  border-color: #e0e6e2;
+}
+
+.disabled .label {
+  color: #8d9992;
+}
+
+.disabled .input {
+  color: #8d9992;
+  cursor: not-allowed;
+}
+
+.disabled .input::placeholder {
+  color: #aab3ae;
+}
+
+.disabled .leftElement,
+.disabled .rightElement {
+  color: #aab3ae;
+}
+
+/* État lecture seule */
+
+.wrapperReadOnly {
+  background-color: #f7f9f8;
+}
+
+.readOnly .input {
+  color: #56635c;
+  cursor: default;
+}
+
+/* Mode sombre */
+
+:global([data-theme="dark"]) .label {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .inputWrapper {
+  background-color: #101813;
+  border-color: #34443a;
+}
+
+:global([data-theme="dark"])
+  .inputWrapper:hover:not(.wrapperDisabled) {
+  border-color: #4b5d52;
+}
+
+:global([data-theme="dark"]) .inputWrapper:focus-within {
+  border-color: #41bf7b;
+  box-shadow: 0 0 0 3px rgb(65 191 123 / 20%);
+}
+
+:global([data-theme="dark"]) .input {
+  color: #edf4ef;
+}
+
+:global([data-theme="dark"]) .input::placeholder {
+  color: #68776f;
+}
+
+:global([data-theme="dark"]) .input:-webkit-autofill,
+:global([data-theme="dark"]) .input:-webkit-autofill:hover,
+:global([data-theme="dark"]) .input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #edf4ef;
+  box-shadow: 0 0 0 1000px #101813 inset;
+}
+
+:global([data-theme="dark"]) .helperText {
+  color: #8f9f96;
+}
+
+:global([data-theme="dark"]) .errorMessage {
+  color: #fda4af;
+}
+
+:global([data-theme="dark"]) .hasError {
+  border-color: #fb7185;
+}
+
+:global([data-theme="dark"]) .hasError:focus-within {
+  border-color: #fb7185;
+  box-shadow: 0 0 0 3px rgb(251 113 133 / 20%);
+}
+
+:global([data-theme="dark"]) .wrapperDisabled {
+  background-color: #151b17;
+  border-color: #29342d;
+}
+
+:global([data-theme="dark"]) .disabled .label,
+:global([data-theme="dark"]) .disabled .input {
+  color: #59665f;
+}
+
+:global([data-theme="dark"]) .wrapperReadOnly {
+  background-color: #151f19;
+}
+
+:global([data-theme="dark"]) .readOnly .input {
+  color: #a6b5ad;
+}
+
+/* Accessibilité */
+
+@media (prefers-reduced-motion: reduce) {
+  .inputWrapper {
+    transition: none;
+  }
+}
