@@ -12,7 +12,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.lang.annotation.Annotation;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,7 +29,7 @@ import lombok.Setter;
         )
     }
 )
-public class Role implements Entity {
+public class Role extends com.tikiscore_server.common.Entity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, length = 50)
@@ -39,13 +38,4 @@ public class Role implements Entity {
     @Column(name = "description", length = 255)
     private String description;
 
-    @Override
-    public String name() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

@@ -1,0 +1,14 @@
+package com.tikiscore_server.security;
+
+public enum Permission {
+    CHAMPIONSHIP_READ,
+    PROFILE_READ,
+    PROFILE_UPDATE,
+    NOTIFICATIONS_MANAGE,
+    FORUM_PARTICIPATE,
+    FORUM_REPORT,
+    FORUM_MODERATE,
+    MATCH_MANAGE_ASSIGNED,
+    COMPETITION_MANAGE,
+    COMPETITION_SHARE
+}

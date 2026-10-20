@@ -18,7 +18,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.lang.annotation.Annotation;
 import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,7 +36,7 @@ import lombok.Setter;
         )
     }
 )
-public class Championat implements Entity {
+public class Championat extends com.tikiscore_server.common.Entity {
 
     @Column(name = "name", nullable = false, length = 150)
     private String name;
@@ -90,13 +89,4 @@ public class Championat implements Entity {
     )
     private User organisateur;
 
-    @Override
-    public String name() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

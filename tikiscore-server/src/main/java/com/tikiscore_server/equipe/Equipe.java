@@ -7,6 +7,7 @@ package com.tikiscore_server.equipe;
  */
 
 import com.tikiscore_server.championat.Championat;
+import com.tikiscore_server.group.CompetitionGroup;
 import com.tikiscore_server.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,7 +17,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.lang.annotation.Annotation;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,7 +34,7 @@ import lombok.Setter;
         )
     }
 )
-public class Equipe implements Entity {
+public class Equipe extends com.tikiscore_server.common.Entity {
 
     @Column(name = "name", nullable = false, length = 120)
     private String name;
@@ -67,18 +67,16 @@ public class Equipe implements Entity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
+        name = "group_id",
+        foreignKey = @ForeignKey(name = "fk_team_group")
+    )
+    private CompetitionGroup group;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
         name = "manager_id",
         foreignKey = @ForeignKey(name = "fk_team_manager")
     )
     private User manager;
 
-    @Override
-    public String name() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

@@ -15,7 +15,6 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Getter;
@@ -35,7 +34,7 @@ import lombok.Setter;
         )
     }
 )
-public class User implements Entity {
+public class User extends com.tikiscore_server.common.Entity {
 
     @Column(name = "username", nullable = false, length = 60)
     private String username;
@@ -66,13 +65,4 @@ public class User implements Entity {
     )
     private Set<Role> roles = new HashSet<>();
 
-    @Override
-    public String name() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public Class<? extends Annotation> annotationType() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }
