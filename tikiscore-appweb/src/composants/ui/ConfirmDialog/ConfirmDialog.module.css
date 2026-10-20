@@ -1,0 +1,8 @@
+.dialog { width: min(100%, 460px); }
+.message { display: flex; align-items: flex-start; gap: 12px; color: #46544c; font-size: 14px; line-height: 1.55; }
+.message p { margin: 0; }
+.danger { color: #7f2531; }
+.icon { flex: 0 0 auto; color: #d33145; }
+:global([data-theme="dark"]) .message { color: #b9c8bf; }
+:global([data-theme="dark"]) .danger { color: #ffc1c9; }
+:global([data-theme="dark"]) .icon { color: #fb7185; }

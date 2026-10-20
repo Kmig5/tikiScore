@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useMemo,
   useState,
   type ReactNode,
@@ -9,46 +7,10 @@ import {
 
 import Toast, {
   type ToastData,
-  type ToastVariant,
 } from "../composants/ui/Toast";
 
 import toastStyles from "../composants/ui/Toast/Toast.module.css";
-
-export interface ShowToastOptions {
-  message: string;
-  title?: string;
-  variant?: ToastVariant;
-  duration?: number;
-}
-
-interface ToastContextValue {
-  showToast: (
-    options: ShowToastOptions
-  ) => string;
-
-  success: (
-    message: string,
-    title?: string
-  ) => string;
-
-  error: (
-    message: string,
-    title?: string
-  ) => string;
-
-  warning: (
-    message: string,
-    title?: string
-  ) => string;
-
-  info: (
-    message: string,
-    title?: string
-  ) => string;
-
-  removeToast: (id: string) => void;
-  clearToasts: () => void;
-}
+import { ToastContext, type ShowToastOptions } from "./ToastContextValue";
 
 interface ToastProviderProps {
   children: ReactNode;
@@ -57,11 +19,6 @@ interface ToastProviderProps {
 
 const DEFAULT_DURATION = 5_000;
 const DEFAULT_MAX_TOASTS = 5;
-
-const ToastContext =
-  createContext<ToastContextValue | undefined>(
-    undefined
-  );
 
 function generateToastId(): string {
   if (
@@ -208,16 +165,4 @@ export function ToastProvider({
       </div>
     </ToastContext.Provider>
   );
-}
-
-export function useToast(): ToastContextValue {
-  const context = useContext(ToastContext);
-
-  if (!context) {
-    throw new Error(
-      "useToast doit être utilisé à l’intérieur de ToastProvider."
-    );
-  }
-
-  return context;
 }

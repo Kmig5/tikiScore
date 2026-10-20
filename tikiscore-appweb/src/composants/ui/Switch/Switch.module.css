@@ -1,0 +1,15 @@
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 52px; padding: 4px 0; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; touch-action: manipulation; }
+.switch:focus-visible { outline: 3px solid rgb(13 132 75 / 28%); outline-offset: 4px; border-radius: 6px; }
+.copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.label { color: #18231d; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.description { color: #5d6a63; font-size: 13px; line-height: 1.4; }
+.track { position: relative; display: flex; flex: 0 0 48px; align-items: center; width: 48px; height: 28px; padding: 3px; border-radius: 999px; background: #aab8af; transition: background-color 150ms ease; }
+.thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform 150ms ease; }
+.checked .track { background: #0d844b; }
+.checked .thumb { transform: translateX(20px); }
+.disabled { cursor: not-allowed; opacity: .55; }
+:global([data-theme="dark"]) .label { color: #edf4ef; }
+:global([data-theme="dark"]) .description { color: #b9c8bf; }
+:global([data-theme="dark"]) .track { background: #53645a; }
+:global([data-theme="dark"]) .checked .track { background: #41bf7b; }
+@media (prefers-reduced-motion: reduce) { .track, .thumb { transition: none; } }

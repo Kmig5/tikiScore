@@ -1,0 +1,6 @@
+.button { display: grid; flex: 0 0 44px; width: 44px; height: 44px; place-items: center; border: 1px solid #dce4df; border-radius: 8px; background: #fff; color: #18231d; cursor: pointer; touch-action: manipulation; transition: background-color 140ms ease, border-color 140ms ease; }
+.button:hover { background: #f0f3f1; border-color: #aab8af; }
+.button:focus-visible { outline: 3px solid rgb(13 132 75 / 25%); outline-offset: 2px; }
+:global([data-theme="dark"]) .button { color: #edf4ef; background: #18231d; border-color: #34443a; }
+:global([data-theme="dark"]) .button:hover { background: #223129; border-color: #53645a; }
+@media (prefers-reduced-motion: reduce) { .button { transition: none; } }
