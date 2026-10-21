@@ -2,7 +2,17 @@ package com.tikiscore_server;
 
 import com.tikiscore_server.Player.Player;
 import com.tikiscore_server.championat.Championat;
+import com.tikiscore_server.announcement.Announcement;
+import com.tikiscore_server.audit.AuditLog;
 import com.tikiscore_server.equipe.Equipe;
+import com.tikiscore_server.forum.Discussion;
+import com.tikiscore_server.forum.DiscussionReply;
+import com.tikiscore_server.forum.ForumCategory;
+import com.tikiscore_server.forum.ForumReport;
+import com.tikiscore_server.match.Match;
+import com.tikiscore_server.match.MatchEvent;
+import com.tikiscore_server.notification.Notification;
+import com.tikiscore_server.notification.NotificationPreferences;
 import com.tikiscore_server.role.Role;
 import com.tikiscore_server.user.User;
 import jakarta.persistence.EntityManager;
@@ -32,7 +42,17 @@ class TikiscoreServerApplicationTests {
 	@Test
 	void allEntitiesInheritGeneratedUuidIdentifier() {
 		assertUuidIdentifier(Championat.class);
+		assertUuidIdentifier(AuditLog.class);
+		assertUuidIdentifier(Announcement.class);
 		assertUuidIdentifier(Equipe.class);
+		assertUuidIdentifier(ForumCategory.class);
+		assertUuidIdentifier(Discussion.class);
+		assertUuidIdentifier(DiscussionReply.class);
+		assertUuidIdentifier(ForumReport.class);
+		assertUuidIdentifier(Match.class);
+		assertUuidIdentifier(MatchEvent.class);
+		assertUuidIdentifier(Notification.class);
+		assertUuidIdentifier(NotificationPreferences.class);
 		assertUuidIdentifier(Player.class);
 		assertUuidIdentifier(User.class);
 		assertUuidIdentifier(Role.class);

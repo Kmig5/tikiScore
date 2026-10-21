@@ -55,7 +55,7 @@ public class SecurityConfiguration {
                                 "ACCESS_DENIED", "Cette action n'est pas autorisée.")))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/r/championnat").permitAll()
+                        .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/logout", "/r/championnat", "/ws", "/ws/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(apiTokenFilter, UsernamePasswordAuthenticationFilter.class)

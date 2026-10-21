@@ -11,9 +11,13 @@ public interface EquipeRepository extends JpaRepository<Equipe, UUID> {
 
     List<Equipe> findAllByChampionship_IdAndGroup_IdAndActiveTrue(UUID championshipId, UUID groupId);
 
+    List<Equipe> findAllByChampionship_IdAndGroup_IdIsNullAndActiveTrue(UUID championshipId);
+
     Optional<Equipe> findByIdAndActiveTrue(UUID id);
 
     Optional<Equipe> findByIdAndChampionship_IdAndActiveTrue(UUID id, UUID championshipId);
 
     boolean existsByNameIgnoreCaseAndChampionship_Id(String name, UUID championshipId);
+
+    boolean existsByNameIgnoreCaseAndChampionship_IdAndIdNot(String name, UUID championshipId, UUID id);
 }

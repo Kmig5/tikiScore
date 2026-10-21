@@ -9,7 +9,11 @@ public interface CompetitionGroupRepository extends JpaRepository<CompetitionGro
 
     List<CompetitionGroup> findAllByChampionship_Id(UUID championshipId);
 
+    List<CompetitionGroup> findAllByChampionship_IdOrderByNameAsc(UUID championshipId);
+
     Optional<CompetitionGroup> findByIdAndChampionship_Id(UUID id, UUID championshipId);
 
     boolean existsByNameIgnoreCaseAndChampionship_Id(String name, UUID championshipId);
+
+    boolean existsByNameIgnoreCaseAndChampionship_IdAndIdNot(String name, UUID championshipId, UUID id);
 }

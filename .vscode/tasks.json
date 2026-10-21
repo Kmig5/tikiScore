@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "TikiScore backend focused tests",
+			"type": "shell",
+			"command": ".\\tikiscore-server\\mvnw.cmd",
+			"args": [
+				"-f",
+				".\\tikiscore-server\\pom.xml",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

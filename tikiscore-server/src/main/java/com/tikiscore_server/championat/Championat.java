@@ -79,6 +79,12 @@ public class Championat extends com.tikiscore_server.common.Entity {
     @Column(name = "points_for_loss", nullable = false)
     private int pointsForLoss = 0;
 
+    @Column(name = "time_zone", nullable = false, length = 60)
+    private String timeZone = "UTC";
+
+    @Column(name = "forum_public", nullable = false)
+    private boolean forumPublic = true;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
         name = "organizer_id",

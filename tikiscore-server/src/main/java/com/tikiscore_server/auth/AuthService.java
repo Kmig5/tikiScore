@@ -150,7 +150,7 @@ public class AuthService {
     private AuthenticatedUserResponse authenticatedUser(User user) {
         Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toUnmodifiableSet());
         Set<String> permissionNames = RolePermissions.permissionsFor(roles).stream()
-                .map(Permission::name)
+            .map(permission -> permission.name().toLowerCase(java.util.Locale.ROOT).replace('_', ':'))
                 .collect(Collectors.toUnmodifiableSet());
         Set<String> roleNames = roles.stream().map(RoleName::name).collect(Collectors.toUnmodifiableSet());
         return new AuthenticatedUserResponse(user.getId(), user.getUsername(), user.getDisplayName(), roleNames, permissionNames);
