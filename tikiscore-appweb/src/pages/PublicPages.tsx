@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
-import { ArrowRight, Radio, Share2, SignalZero } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Radio, Share2 } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
 import Select from "../composants/ui/Select";
 import { useDemoAccess } from "../app/useDemoAccess";
-import { useTikiScoreData } from "../app/hooks";
+import { useLiveMatchMinute, useTikiScoreData } from "../app/hooks";
+import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTransport";
+import { tikiScoreService } from "../services/tikiScoreService";
 import type { MatchStatus } from "../domain/types";
 import { hasPermission } from "../domain/permissions";
 import { useToast } from "../contexts/useToast";
@@ -119,6 +121,14 @@ export function MatchDetailPage() {
   const data = useTikiScoreData();
   const { permissions } = useDemoAccess();
   const match = data.matches.find((candidate) => candidate.id === matchId);
+  const liveMinute = useLiveMatchMinute(match);
+  const [liveConnection, setLiveConnection] = useState<LiveConnectionStatus>("disconnected");
+  useEffect(() => {
+    if (!match || (match.status !== "live" && match.status !== "halftime")) return;
+    return apiLiveTransport.connect(match.id, setLiveConnection, () => {
+      void tikiScoreService.refreshMatch(match.id).catch((error: unknown) => console.error("Impossible de synchroniser le match.", error));
+    });
+  }, [match?.id, match?.status]);
   if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Cette rencontre n’existe pas" body="Elle a peut-être été déplacée ou supprimée." action={<Link to="/matchs"><Button variant="secondary">Retour aux matchs</Button></Link>} /></div>;
   const home = data.teams.find((team) => team.id === match.homeTeamId);
   const away = data.teams.find((team) => team.id === match.awayTeamId);
@@ -131,11 +141,11 @@ export function MatchDetailPage() {
       <div className={styles.consoleTeam}><TeamMark teamId={match.homeTeamId} large /><span>{home?.name}</span></div>
       <strong className={styles.consoleScoreValue}>{match.homeScore ?? "–"}<span style={{ fontSize: 20, color: "#91a097" }}> : </span>{match.awayScore ?? "–"}</strong>
       <div className={styles.consoleTeam}><TeamMark teamId={match.awayTeamId} large /><span>{away?.name}</span></div>
-      <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center" }}><Badge variant={match.status === "live" ? "live" : "neutral"} dot={match.status === "live"}>{status}{match.minute !== undefined ? ` · ${match.minute}′` : ""}</Badge></div>
+      <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "center" }}><Badge variant={match.status === "live" ? "live" : "neutral"} dot={match.status === "live"}>{status}{match.status === "live" || match.minute !== undefined ? ` · ${liveMinute}′` : ""}</Badge></div>
     </div>
-    {(match.status === "live" || match.status === "halftime") && <div className={styles.warningBox}><SignalZero size={16} aria-hidden="true" /><span>Aperçu de démonstration · aucun flux serveur connecté. Le score affiché n’est pas une donnée officielle.</span></div>}
+    {(match.status === "live" || match.status === "halftime") && <div className={styles.liveConnection} role="status"><Radio size={16} aria-hidden="true" /><span>{liveConnection === "connected" ? "Direct synchronisé avec le serveur." : liveConnection === "reconnecting" ? "Reconnexion au direct…" : "Connexion au direct arrêtée."}</span></div>}
     <div className={styles.detailGrid}>
-      <section className={styles.section}><SectionHeading title="Chronologie" />{match.events.length ? <div className={styles.timeline}>{[...match.events].sort((first, second) => first.minute - second.minute || first.occurredAt.localeCompare(second.occurredAt)).map((event) => <div className={styles.timelineItem} key={event.id}><span className={styles.timelineMinute}>{event.minute}′</span><span className={styles.timelineDot} aria-hidden="true" /><span>{eventDescription(event, data)}</span></div>)}</div> : <EmptyState title="Aucun événement" body="Les événements du match apparaîtront ici." />}</section>
+      <section className={styles.section}><SectionHeading title="Chronologie" />{match.events.length ? <div className={styles.eventCompartments} aria-label={`Événements, ${home?.name ?? "équipe à domicile"} contre ${away?.name ?? "équipe visiteuse"}`}><div className={styles.eventTeamHeading}>{home?.name ?? "Domicile"}</div><div className={styles.eventTeamHeading}>{away?.name ?? "Extérieur"}</div>{[...match.events].sort((first, second) => first.minute - second.minute || first.occurredAt.localeCompare(second.occurredAt)).map((event, index) => <div className={`${styles.compartmentEvent} ${event.teamId === match.awayTeamId ? styles.awayEvent : event.teamId === match.homeTeamId ? styles.homeEvent : styles.neutralEvent}`} style={{ gridRow: index + 2 }} key={event.id}><strong>{event.minute}′</strong><span>{eventDescription(event, data)}</span></div>)}</div> : <EmptyState title="Aucun événement" body="Les événements du match apparaîtront ici." />}</section>
       <aside className={styles.panel}><h2 className={styles.panelTitle}>Informations</h2><p className={styles.contentText}>{status} · {match.venue}</p><div className={styles.spacer} /><p className={styles.dataNote}>Les résultats, événements et classements officiels seront fournis par l’API du championnat.</p></aside>
     </div>
   </div>;
@@ -152,25 +162,27 @@ const rankingTabs = [
 export function StandingsPage({ type = "teams" }: { type?: "teams" | "goals" | "assists" | "cards" }) {
   const data = useTikiScoreData();
   const location = useLocation();
-  const [groupId, setGroupId] = useState(data.groups[0]?.id ?? "");
+  const [groupId, setGroupId] = useState(() => window.localStorage.getItem("tikiscore-ranking-group") ?? "all");
   const selectedGroup = data.groups.find((group) => group.id === groupId);
   const title = type === "teams" ? "Classements" : type === "goals" ? "Classement des buteurs" : type === "assists" ? "Classement des passeurs" : "Classement des cartons";
+  const filteredStandings = data.standings.filter((standing) => groupId === "all" || standing.groupId === groupId);
+  const filteredLeaderboard = data.leaderboard.filter((entry) => groupId === "all" || data.teams.find((team) => team.id === entry.teamId)?.groupId === groupId);
 
   return <div className={styles.page}>
     <PageHeader eyebrow="Compétition" title={title} description="Données de démonstration, en attente des classements calculés par le serveur." />
     <nav className={styles.tabs} aria-label="Types de classement">{rankingTabs.map((tab) => <Link key={tab.to} to={tab.to} aria-current={tab.to === location.pathname ? "page" : undefined} className={`${styles.tab} ${tab.to === location.pathname ? styles.tabActive : ""}`}>{tab.label}</Link>)}</nav>
-    {type === "teams" ? <>
-      <div className={styles.filterRow}><label htmlFor="group-filter">Poule</label><Select id="group-filter" label="Poule" options={data.groups.map((group) => ({ value: group.id, label: group.name }))} value={groupId} onChange={(event) => setGroupId(event.target.value)} fullWidth={false} /></div>
-      {selectedGroup ? <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup.name}</h2><StandingList standings={data.standings.filter((standing) => standing.groupId === selectedGroup.id)} /></section> : <EmptyState title="Aucune poule disponible" body="Les classements apparaîtront dès que les poules seront configurées." />}
-    </> : <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup?.name ?? "Toutes les poules"}</h2><LeaderboardList metric={type} limit={data.leaderboard.length} /></section>}
+    <div className={styles.filterRow}><label htmlFor="group-filter">Poule</label><Select id="group-filter" label="Poule" options={[{ value: "all", label: "Classement global · toutes les poules" }, ...data.groups.map((group) => ({ value: group.id, label: group.name }))]} value={groupId} onChange={(event) => { setGroupId(event.target.value); window.localStorage.setItem("tikiscore-ranking-group", event.target.value); }} fullWidth={false} /></div>
+    {type === "teams" ? filteredStandings.length ? <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup?.name ?? "Classement global"}</h2><StandingList standings={filteredStandings} /></section> : <EmptyState title="Aucun classement disponible" body="Les classements apparaîtront dès que les données du serveur seront disponibles." /> : <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup?.name ?? "Classement global"}</h2><LeaderboardList metric={type} limit={filteredLeaderboard.length} entries={filteredLeaderboard} /></section>}
   </div>;
 }
 
 export function StatisticsPage() {
   const data = useTikiScoreData();
+  const location = useLocation();
   const stats = data.statistics;
   return <div className={styles.page}>
     <PageHeader eyebrow="Compétition" title="Statistiques" description="Indicateurs fournis par les données de démonstration. Les calculs officiels dépendront de l’API." />
+    <nav className={styles.tabs} aria-label="Types de classement">{rankingTabs.map((tab) => <Link key={tab.to} to={tab.to} aria-current={tab.to === location.pathname ? "page" : undefined} className={`${styles.tab} ${tab.to === location.pathname ? styles.tabActive : ""}`}>{tab.label}</Link>)}</nav>
     <div className={styles.metricGrid}>
       <div className={styles.metric}><span>Matchs joués</span><strong>{stats.matchesPlayed}</strong></div>
       <div className={styles.metric}><span>Buts inscrits</span><strong>{stats.goalsScored}</strong></div>

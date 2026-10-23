@@ -5,12 +5,13 @@
 .brandName { font-size: 18px; font-weight: 750; letter-spacing: 0; }
 .brandName span { color: #0d844b; }
 .headerRight { display: flex; align-items: center; gap: 12px; }
-.demoFlag { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid #e9d6a5; border-radius: 5px; background: #fff8e7; color: #765718; font-size: 12px; font-weight: 650; }
-.demoFlag span { width: 7px; height: 7px; border-radius: 50%; background: #d68600; }
-.personaLabel { display: flex; flex-direction: column; gap: 1px; color: #5d6a63; font-size: 10px; line-height: 1.2; }
-.personaLabel select { max-width: 180px; border: 0; padding: 1px 18px 1px 0; background: transparent; color: #18231d; font: inherit; font-size: 12px; font-weight: 650; }
-.personaLabel select:focus-visible { outline: 2px solid #0d844b; outline-offset: 2px; }
+.connectionFlag { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid #c8dfd2; border-radius: 5px; background: #f0f8f3; color: #09663b; font-size: 12px; font-weight: 650; }
+.connectionFlag span { width: 7px; height: 7px; border-radius: 50%; background: #0d844b; }
+.userName { max-width: 140px; overflow: hidden; color: #435149; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.signInLink, .signOutButton { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 11px; border: 1px solid #c8dfd2; border-radius: 6px; background: transparent; color: #09663b; font: inherit; font-size: 12px; font-weight: 650; text-decoration: none; cursor: pointer; }
 .headerIcon { position: relative; display: grid; width: 44px; height: 44px; place-items: center; border-radius: 7px; color: #435149; text-decoration: none; }
+.backButton { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0 0 14px; padding: 0 12px; border: 1px solid #dce4df; border-radius: 6px; background: #fff; color: #25342b; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; touch-action: manipulation; }
+.backButton:focus-visible { outline: 3px solid rgb(13 132 75 / 35%); outline-offset: 2px; }
 .headerIcon:hover { background: #f0f3f1; }
 .headerIcon:focus-visible, .navLink:focus-visible, .mobileLink:focus-visible, .shareLink:focus-visible { outline: 3px solid rgb(13 132 75 / 35%); outline-offset: 2px; }
 .notificationBadge { position: absolute; top: 2px; right: 1px; display: grid; min-width: 17px; height: 17px; padding: 0 4px; place-items: center; border: 2px solid #fff; border-radius: 99px; background: #d33145; color: white; font-size: 10px; font-weight: 700; }
@@ -32,18 +33,18 @@
 .shareLink:hover { background: #f0f8f3; }
 .main { flex: 1; min-width: 0; max-width: 1440px; margin: 0 auto; padding: 22px clamp(18px, 3vw, 42px) 40px; }
 .managementMain { background: #f8f8f5; }
-.demoNotice { display: flex; align-items: center; gap: 9px; min-height: 36px; margin-bottom: 22px; padding: 7px 11px; border: 1px solid #e9d6a5; border-radius: 5px; background: #fff8e7; color: #765718; font-size: 12px; }
-.demoNotice > svg { flex: 0 0 auto; }
-.demoNotice a { display: grid; flex: 0 0 28px; width: 28px; height: 28px; margin-left: auto; place-items: center; border-radius: 4px; color: inherit; }
-.demoNotice a:focus-visible { outline: 2px solid currentColor; }
-.demoDetails { margin-top: 40px; padding-top: 12px; border-top: 1px solid #dce4df; color: #68766e; font-size: 11px; line-height: 1.5; }
+.apiNotice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding: 11px 13px; border: 1px solid #c8dfd2; border-radius: 6px; background: #f0f8f3; color: #09663b; font-size: 12px; }
+.apiNotice button { min-height: 40px; padding: 0 10px; border: 1px solid currentColor; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: 650; cursor: pointer; }
+.apiError { border-color: #efb5bd; background: #fff2f3; color: #a61d32; }
 .mobileNavigation { display: none; }
 :global([data-theme="dark"]) .application { background: #0b110e; color: #edf4ef; }
 :global([data-theme="dark"]) .header, :global([data-theme="dark"]) .sidebar { background: #131c17; border-color: #34443a; }
 :global([data-theme="dark"]) .brandName span { color: #41bf7b; }
-:global([data-theme="dark"]) .personaLabel { color: #b9c8bf; }
-:global([data-theme="dark"]) .personaLabel select { color: #edf4ef; }
+:global([data-theme="dark"]) .connectionFlag { border-color: #3e7355; background: #1c3929; color: #74d69f; }
+:global([data-theme="dark"]) .userName { color: #b9c8bf; }
+:global([data-theme="dark"]) .signInLink, :global([data-theme="dark"]) .signOutButton { border-color: #3e7355; color: #74d69f; }
 :global([data-theme="dark"]) .headerIcon { color: #b9c8bf; }
+:global([data-theme="dark"]) .backButton { border-color: #34443a; background: #131c17; color: #edf4ef; }
 :global([data-theme="dark"]) .notificationBadge { border-color: #131c17; }
 :global([data-theme="dark"]) .championshipBlock { border-color: #34443a; }
 :global([data-theme="dark"]) .championshipBlock strong { color: #edf4ef; }
@@ -53,8 +54,8 @@
 :global([data-theme="dark"]) .active { background: #1c3929; color: #74d69f; }
 :global([data-theme="dark"]) .managementNav { border-color: #34443a; }
 :global([data-theme="dark"]) .shareLink { border-color: #3e7355; color: #74d69f; }
-:global([data-theme="dark"]) .demoNotice { border-color: #6f5a2c; background: #2a2415; color: #f7d789; }
-:global([data-theme="dark"]) .demoDetails { border-color: #34443a; color: #b9c8bf; }
+:global([data-theme="dark"]) .apiNotice { border-color: #3e7355; background: #1c3929; color: #74d69f; }
+:global([data-theme="dark"]) .apiError { border-color: #71323a; background: #321b20; color: #fb7185; }
 @media (max-width: 1023px) {
   .header { min-height: 62px; padding: 0 18px; }
   .body { min-height: calc(100svh - 62px); }
@@ -71,14 +72,14 @@
 @media (max-width: 600px) {
   .header { padding: 0 12px; }
   .headerRight { gap: 6px; }
-  .demoFlag { padding: 5px 7px; font-size: 10px; }
-  .personaLabel { display: none; }
+  .connectionFlag { padding: 5px 7px; font-size: 10px; }
+  .userName { display: none; }
   .main { padding: 14px 14px calc(88px + env(safe-area-inset-bottom)); }
   .demoNotice { align-items: flex-start; margin-bottom: 16px; font-size: 11px; }
 }
 @media (max-width: 360px) {
   .brandName { font-size: 16px; }
-  .demoFlag { gap: 5px; padding: 5px; }
+  .connectionFlag { gap: 5px; padding: 5px; }
   .main { padding-right: 10px; padding-left: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .navLink, .mobileLink { scroll-behavior: auto; } }

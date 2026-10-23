@@ -1,24 +1,18 @@
-import { Bell, CircleHelp, ShieldAlert, Share2, Volleyball } from "lucide-react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { ArrowLeft, Bell, Settings2, Share2, Volleyball } from "lucide-react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDemoAccess } from "../useDemoAccess";
 import { getVisibleNavigation } from "../navigation";
 import { hasPermission } from "../../domain/permissions";
-import { useTikiScoreData } from "../hooks";
-import ThemeToggle from "../../composants/ui/ThemeToggle";
+import { useTikiScoreData, useTikiScoreStatus } from "../hooks";
+import { tikiScoreService } from "../../services/tikiScoreService";
 import styles from "./AppShell.module.css";
 
-const personaLabels = {
-  visitor: "Visiteur",
-  member: "Membre · aperçu",
-  matchManager: "Gestionnaire · aperçu",
-  moderator: "Modérateur · aperçu",
-  administrator: "Administrateur · aperçu",
-} as const;
-
 export default function AppShell() {
-  const { personaId, setPersonaId, permissions } = useDemoAccess();
+  const { user, permissions, signOut } = useDemoAccess();
   const data = useTikiScoreData();
+  const dataStatus = useTikiScoreStatus();
   const location = useLocation();
+  const navigate = useNavigate();
   const visibleNavigation = getVisibleNavigation(permissions);
   const mobileNavigation = visibleNavigation.filter((item) => item.primary);
   const unreadCount = data.notifications.filter((notification) => !notification.read).length;
@@ -32,18 +26,13 @@ export default function AppShell() {
           <span className={styles.brandName}>Tiki<span>Score</span></span>
         </NavLink>
         <div className={styles.headerRight}>
-          <span className={styles.demoFlag}><span /> Données démo</span>
-          <label className={styles.personaLabel}>
-            <span>Profil aperçu</span>
-            <select value={personaId} onChange={(event) => setPersonaId(event.target.value as keyof typeof personaLabels)} aria-label="Choisir un profil de démonstration">
-              {Object.entries(personaLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-            </select>
-          </label>
+          <span className={styles.connectionFlag}><span />API</span>
+          {user ? <><span className={styles.userName}>{user.displayName}</span><button className={styles.signOutButton} type="button" onClick={() => { void signOut().catch((error: unknown) => console.error("Échec de la déconnexion.", error)); }}>Déconnexion</button></> : <Link className={styles.signInLink} to="/connexion">Connexion</Link>}
           <NavLink className={styles.headerIcon} to="/notifications" aria-label={`Notifications, ${unreadCount} non lues`}>
             <Bell size={20} aria-hidden="true" />
             {unreadCount > 0 && <span className={styles.notificationBadge}>{unreadCount}</span>}
           </NavLink>
-          <ThemeToggle />
+          <NavLink className={styles.headerIcon} to="/parametres" aria-label="Paramètres"><Settings2 size={20} aria-hidden="true" /></NavLink>
         </div>
       </header>
 
@@ -51,8 +40,8 @@ export default function AppShell() {
         <aside className={styles.sidebar} aria-label="Navigation principale">
           <div className={styles.championshipBlock}>
             <span className={styles.eyebrow}>CHAMPIONNAT</span>
-            <strong>{data.championship.name}</strong>
-            <span>{data.championship.edition} · {data.championship.locality}</span>
+            <strong>{data.championship.name || "TikiScore"}</strong>
+            {data.championship.name && <span>{data.championship.edition} · {data.championship.locality}</span>}
           </div>
           <nav className={styles.sidebarNav}>
             {visibleNavigation.filter((item) => item.group !== "management").map((item) => {
@@ -78,13 +67,14 @@ export default function AppShell() {
         </aside>
 
         <main className={`${styles.main} ${isManagement ? styles.managementMain : ""}`} id="main-content" tabIndex={-1}>
-          <div className={styles.demoNotice} role="status">
-            <ShieldAlert size={16} aria-hidden="true" />
-            <span>Aperçu de démonstration · données locales, non enregistrées ni synchronisées.</span>
-            <a href="#demo-details" aria-label="À propos du mode démonstration"><CircleHelp size={16} aria-hidden="true" /></a>
-          </div>
+          {location.pathname !== "/" && <button className={styles.backButton} type="button" onClick={() => {
+            if (window.history.state?.idx > 0) navigate(-1);
+            else navigate("/");
+          }}><ArrowLeft size={17} aria-hidden="true" />Retour</button>}
+          {dataStatus.state !== "ready" && <div className={`${styles.apiNotice} ${dataStatus.state === "error" ? styles.apiError : ""}`} role={dataStatus.state === "error" ? "alert" : "status"}>
+            <span>{dataStatus.message}</span>{dataStatus.state === "error" && <button type="button" onClick={() => { void tikiScoreService.refresh(); }}>Réessayer</button>}
+          </div>}
           <Outlet />
-          <p className={styles.demoDetails} id="demo-details">Les profils et permissions affichés servent uniquement à prévisualiser l’interface. Le serveur doit contrôler toute authentification et autorisation.</p>
         </main>
       </div>
 

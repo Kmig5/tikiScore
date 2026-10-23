@@ -100,6 +100,7 @@ export const demoData: TikiScoreData = {
     { id: "discussion-1", category: "Vie du tournoi", title: "Les meilleurs souvenirs du premier week-end", body: "Quel moment vous a le plus marqué sur les terrains ?", authorName: "Supporter du tournoi", createdAt: publishedAt(-1), replies: [{ id: "reply-1", authorName: "Supporter des Alizés", body: "La dernière action du match d’ouverture !", createdAt: publishedAt(0), hidden: false }], pinned: true, closed: false, hidden: false },
     { id: "discussion-2", category: "Organisation", title: "Covoiturage pour les matchs de demain", body: "Un fil pour organiser les trajets vers le terrain annexe.", authorName: "Membre du forum", createdAt: publishedAt(0), replies: [], pinned: false, closed: false, hidden: false },
   ],
+  forumCategories: [],
   reports: [],
   demoPersonas: [
     { id: "visitor", label: "Visiteur" },

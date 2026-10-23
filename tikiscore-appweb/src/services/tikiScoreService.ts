@@ -1,212 +1,155 @@
-import { demoData } from "./demo/demoData";
-import type { Announcement, ChampionshipStatistics, Match, MatchEvent, MatchEventInput, MatchStatus, Player, Team, TikiScoreData } from "../domain/types";
+import { tikiScoreApi } from "./api";
+import type { Announcement, MatchEventInput, Player, Team, TikiScoreData } from "../domain/types";
+
+export type DataStatus =
+  | { state: "loading"; message: string }
+  | { state: "ready"; message: "" }
+  | { state: "error"; message: string };
 
 export interface ServiceMode {
-  kind: "demo";
-  persistent: false;
+  kind: "api";
+  persistent: true;
   liveConnected: false;
 }
 
-const mode: ServiceMode = { kind: "demo", persistent: false, liveConnected: false };
-let state: TikiScoreData = structuredClone(demoData);
+const mode: ServiceMode = { kind: "api", persistent: true, liveConnected: false };
+let state: TikiScoreData = {
+  championship: { id: "", name: "", edition: "", description: "", locality: "", startDate: "", endDate: "", publicUrl: "/", format: "" },
+  groups: [], teams: [], players: [], matches: [], standings: [], leaderboard: [],
+  statistics: { matchesPlayed: 0, goalsScored: 0, teamsCount: 0, playersCount: 0 },
+  announcements: [], notifications: [], discussions: [], forumCategories: [], reports: [], demoPersonas: [], forumPublic: false,
+};
+let status: DataStatus = { state: "loading", message: "Connexion au serveur…" };
+let refreshInFlight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
+const statusListeners = new Set<() => void>();
 
 function notify(): void {
   listeners.forEach((listener) => listener());
 }
 
-function read<T>(selector: (data: TikiScoreData) => T): T {
-  return selector(state);
+function notifyStatus(): void {
+  statusListeners.forEach((listener) => listener());
 }
 
-function calculateStatistics(data: TikiScoreData): ChampionshipStatistics {
-  const finishedMatches = data.matches.filter((match) => match.status === "finished");
-  return {
-    matchesPlayed: finishedMatches.length,
-    goalsScored: finishedMatches.reduce((total, match) => total + (match.homeScore ?? 0) + (match.awayScore ?? 0), 0),
-    teamsCount: data.teams.length,
-    playersCount: data.players.length,
-  };
+function setStatus(next: DataStatus): void {
+  status = next;
+  notifyStatus();
+}
+
+async function refresh(): Promise<void> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    setStatus({ state: "loading", message: "Chargement des données du championnat…" });
+    try {
+      const [publicData, privateData] = await Promise.all([tikiScoreApi.getPublicData(), tikiScoreApi.getPrivateData()]);
+      const privateMatches = privateData.matches ?? [];
+      const publicMatches = privateMatches.length
+        ? publicData.matches.map((match) => {
+          const assigned = privateMatches.find((candidate) => candidate.id === match.id);
+          return assigned ? { ...match, assignedManagerIds: assigned.assignedManagerIds, events: assigned.events } : match;
+        })
+        : publicData.matches;
+      state = { ...publicData, ...privateData, matches: publicMatches };
+      setStatus({ state: "ready", message: "" });
+      notify();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Impossible de charger les données du serveur.";
+      setStatus({ state: "error", message });
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
+async function mutate(operation: () => Promise<unknown>): Promise<void> {
+  await operation();
+  await refresh();
 }
 
 export const tikiScoreService = {
   mode,
-
+  initialize: refresh,
+  refresh,
+  getStatus: () => status,
+  subscribeStatus(listener: () => void): () => void {
+    statusListeners.add(listener);
+    return () => statusListeners.delete(listener);
+  },
   subscribe(listener: () => void): () => void {
     listeners.add(listener);
     return () => listeners.delete(listener);
   },
+  getSnapshot(): TikiScoreData { return state; },
+  getChampionship: () => state.championship,
+  getGroups: () => state.groups,
+  getTeams: () => state.teams,
+  getPlayers: () => state.players,
+  getMatches: () => state.matches,
+  getMatch: (matchId: string) => state.matches.find((match) => match.id === matchId),
+  getStandings: () => state.standings,
+  getLeaderboard: () => state.leaderboard,
+  getStatistics: () => state.statistics,
+  getAnnouncements: () => state.announcements,
+  getNotifications: () => state.notifications,
+  getDiscussions: () => state.discussions,
 
-  getSnapshot(): TikiScoreData {
-    return state;
+  async appendMatchEvent(matchId: string, input: MatchEventInput): Promise<void> {
+    await mutate(() => tikiScoreApi.recordEvent(matchId, input));
   },
-
-  getChampionship: () => read((data) => data.championship),
-  getGroups: () => read((data) => data.groups),
-  getTeams: () => read((data) => data.teams),
-  getPlayers: () => read((data) => data.players),
-  getMatches: () => read((data) => data.matches),
-  getMatch: (matchId: string) => read((data) => data.matches.find((match) => match.id === matchId)),
-  getStandings: () => read((data) => data.standings),
-  getLeaderboard: () => read((data) => data.leaderboard),
-  getStatistics: () => read(calculateStatistics),
-  getAnnouncements: () => read((data) => data.announcements),
-  getNotifications: () => read((data) => data.notifications),
-  getDiscussions: () => read((data) => data.discussions),
-
-  appendMatchEvent(matchId: string, input: MatchEventInput): MatchEvent | undefined {
-    const matchIndex = state.matches.findIndex((match) => match.id === matchId);
-    if (matchIndex < 0) return undefined;
-    const match = state.matches[matchIndex];
-    const event: MatchEvent = {
-      ...input,
-      id: `demo-event-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      matchId,
-      occurredAt: new Date().toISOString(),
-    };
-    const events = [...match.events, event].sort((first, second) => first.minute - second.minute || first.occurredAt.localeCompare(second.occurredAt));
-    let homeScore = match.homeScore ?? 0;
-    let awayScore = match.awayScore ?? 0;
-    if (input.type === "goal" && input.teamId === match.homeTeamId) homeScore += 1;
-    if (input.type === "goal" && input.teamId === match.awayTeamId) awayScore += 1;
-
-    const nextStatus: MatchStatus = input.type === "halftime" ? "halftime" : input.type === "periodResume" ? "live" : input.type === "fullTime" ? "finished" : match.status === "scheduled" ? "live" : match.status;
-    const matches = state.matches.map((current, index) => index === matchIndex
-      ? { ...current, events, status: nextStatus, homeScore, awayScore, minute: Math.max(current.minute ?? 0, input.minute) }
-      : current);
-    state = {
-      ...state,
-      matches,
-      statistics: calculateStatistics({ ...state, matches }),
-    };
-    notify();
-    return event;
-  },
-
-  removeMatchEvent(matchId: string, eventId: string): boolean {
-    const match = state.matches.find((entry) => entry.id === matchId);
-    const event = match?.events.find((entry) => entry.id === eventId);
-    if (!match || !event) return false;
-    const homeScore = event.type === "goal" && event.teamId === match.homeTeamId ? Math.max(0, (match.homeScore ?? 0) - 1) : match.homeScore;
-    const awayScore = event.type === "goal" && event.teamId === match.awayTeamId ? Math.max(0, (match.awayScore ?? 0) - 1) : match.awayScore;
-    const matches = state.matches.map((entry) => entry.id === matchId
-      ? { ...entry, events: entry.events.filter((candidate) => candidate.id !== eventId), homeScore, awayScore, status: event.type === "fullTime" ? "live" : entry.status }
-      : entry);
-    state = {
-      ...state,
-      matches,
-      statistics: calculateStatistics({ ...state, matches }),
-    };
-    notify();
-    return true;
-  },
-
-  setDiscussionState(discussionId: string, update: { pinned?: boolean; closed?: boolean; hidden?: boolean }): void {
-    state = {
-      ...state,
-      discussions: state.discussions.map((discussion) => discussion.id === discussionId ? { ...discussion, ...update } : discussion),
-    };
+  async refreshMatch(matchId: string): Promise<void> {
+    const updatedMatch = await tikiScoreApi.getMatch(matchId);
+    state = { ...state, matches: state.matches.map((match) => match.id === matchId ? updatedMatch : match) };
     notify();
   },
-
-  addDiscussion(title: string, body: string, authorName: string): void {
-    const discussion = {
-      id: `demo-discussion-${Date.now()}`,
-      category: "Vie du tournoi",
-      title,
-      body,
-      authorName,
-      createdAt: new Date().toISOString(),
-      replies: [],
-      pinned: false,
-      closed: false,
-      hidden: false,
-    };
-    state = { ...state, discussions: [discussion, ...state.discussions] };
-    notify();
+  async removeMatchEvent(matchId: string, eventId: string): Promise<void> {
+    await mutate(() => tikiScoreApi.cancelEvent(matchId, eventId));
   },
-
-  addReply(discussionId: string, body: string, authorName: string): void {
-    state = {
-      ...state,
-      discussions: state.discussions.map((discussion) => discussion.id === discussionId
-        ? { ...discussion, replies: [...discussion.replies, { id: `demo-reply-${Date.now()}`, authorName, body, createdAt: new Date().toISOString(), hidden: false }] }
-        : discussion),
-    };
-    notify();
+  async setDiscussionState(discussionId: string, update: { pinned?: boolean; closed?: boolean; hidden?: boolean }): Promise<void> {
+    await mutate(() => tikiScoreApi.updateForumState(discussionId, update));
   },
-
-  addForumReport(discussionId: string, reason: string): void {
-    state = {
-      ...state,
-      reports: [...state.reports, { id: `demo-report-${Date.now()}`, discussionId, reason, createdAt: new Date().toISOString(), resolved: false }],
-    };
-    notify();
+  async addReply(discussionId: string, body: string): Promise<void> {
+    await mutate(() => tikiScoreApi.reply(discussionId, body));
   },
-
-  resolveForumReport(reportId: string): void {
-    state = { ...state, reports: state.reports.map((report) => report.id === reportId ? { ...report, resolved: true } : report) };
-    notify();
+  async createDiscussion(body: string): Promise<void> {
+    const category = state.forumCategories[0];
+    if (!category) throw new Error("Aucune catégorie du forum n’est configurée.");
+    const title = body.trim().slice(0, 80);
+    await mutate(() => tikiScoreApi.createDiscussion(category.id, title, body));
   },
-
-  addTeam(input: Omit<Team, "id">): Team {
-    const team: Team = { ...input, id: `demo-team-${Date.now()}` };
-    state = {
-      ...state,
-      teams: [...state.teams, team],
-      statistics: calculateStatistics({ ...state, teams: [...state.teams, team] }),
-    };
-    notify();
-    return team;
+  async addForumReport(postId: string, reason: string): Promise<void> {
+    await mutate(() => tikiScoreApi.report(postId, reason));
   },
-
-  addPlayer(input: Omit<Player, "id">): Player {
-    const player: Player = { ...input, id: `demo-player-${Date.now()}` };
-    state = {
-      ...state,
-      players: [...state.players, player],
-      statistics: calculateStatistics({ ...state, players: [...state.players, player] }),
-    };
-    notify();
-    return player;
+  async resolveForumReport(reportId: string): Promise<void> {
+    await mutate(() => tikiScoreApi.resolveReport(reportId));
   },
-
-  addMatch(input: Omit<Match, "id" | "events" | "status" | "assignedManagerIds">): Match {
-    const match: Match = { ...input, id: `demo-match-${Date.now()}`, status: "scheduled", assignedManagerIds: [], events: [] };
-    state = { ...state, matches: [...state.matches, match] };
-    notify();
-    return match;
+  async addTeam(input: Omit<Team, "id">): Promise<void> {
+    await mutate(() => tikiScoreApi.createTeam(input));
   },
-
-  setMatchManager(matchId: string, managerIds: string[]): void {
-    state = { ...state, matches: state.matches.map((match) => match.id === matchId ? { ...match, assignedManagerIds: managerIds } : match) };
-    notify();
+  async addPlayer(input: Omit<Player, "id">): Promise<void> {
+    await mutate(() => tikiScoreApi.createPlayer(input));
   },
-
-  addAnnouncement(input: Omit<Announcement, "id" | "publishedAt" | "official">): Announcement {
-    const announcement: Announcement = { ...input, id: `demo-announcement-${Date.now()}`, publishedAt: new Date().toISOString(), official: true };
-    state = { ...state, announcements: [announcement, ...state.announcements] };
-    notify();
-    return announcement;
+  async addMatch(input: { groupId: string; homeTeamId: string; awayTeamId: string; startsAt: string; venue: string }): Promise<void> {
+    await mutate(() => tikiScoreApi.createMatch(input));
   },
-
-  markNotificationRead(notificationId: string): void {
-    state = { ...state, notifications: state.notifications.map((notification) => notification.id === notificationId ? { ...notification, read: true } : notification) };
-    notify();
+  async addAnnouncement(input: Pick<Announcement, "title" | "excerpt" | "body" | "priority">): Promise<void> {
+    await mutate(() => tikiScoreApi.createAnnouncement(input));
   },
-
-  markAllNotificationsRead(): void {
-    state = { ...state, notifications: state.notifications.map((notification) => ({ ...notification, read: true })) };
-    notify();
+  async markNotificationRead(id: string): Promise<void> {
+    await mutate(() => tikiScoreApi.markNotificationRead(id));
   },
-
-  setForumPublic(forumPublic: boolean): void {
-    state = { ...state, forumPublic };
-    notify();
+  async markAllNotificationsRead(): Promise<void> {
+    await mutate(() => tikiScoreApi.markAllNotificationsRead());
   },
-
-  resetDemo(): void {
-    state = structuredClone(demoData);
-    notify();
+  async setForumPublic(enabled: boolean): Promise<void> {
+    await mutate(() => tikiScoreApi.updateChampionship({ forumPublic: enabled }));
   },
+  async updateManagerAssignment(matchId: string, managerIds: string[]): Promise<void> {
+    await mutate(() => tikiScoreApi.assignManagers(matchId, managerIds));
+  },
+  async startMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.startMatch(matchId)); },
+  async halfTime(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.halfTime(matchId)); },
+  async resumeMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.resumeMatch(matchId)); },
+  async finishMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.finishMatch(matchId)); },
 };

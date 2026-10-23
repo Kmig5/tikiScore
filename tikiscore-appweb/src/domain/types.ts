@@ -39,11 +39,16 @@ export interface Team {
 export interface Player {
   id: string;
   displayName: string;
-  jerseyNumber: number;
+  jerseyNumber: number | null;
   teamId: string;
 }
 
 export interface Group {
+  id: string;
+  name: string;
+}
+
+export interface ForumCategory {
   id: string;
   name: string;
 }
@@ -54,6 +59,7 @@ export interface MatchEvent {
   type: MatchEventType;
   minute: number;
   occurredAt: string;
+  sequence?: number;
   teamId?: string;
   playerId?: string;
   relatedPlayerId?: string;
@@ -168,6 +174,7 @@ export interface TikiScoreData {
   announcements: Announcement[];
   notifications: ChampionshipNotification[];
   discussions: Discussion[];
+  forumCategories: ForumCategory[];
   reports: ForumReport[];
   demoPersonas: DemoPersona[];
   forumPublic: boolean;

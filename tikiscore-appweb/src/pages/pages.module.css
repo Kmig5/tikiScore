@@ -52,14 +52,15 @@
 .leaderInfo strong { overflow: hidden; color: #25342b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .leaderInfo span { color: #748078; font-size: 10px; }
 .leaderScore { display: grid; min-width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #eef6f0; color: #0c693f; font-size: 12px; font-variant-numeric: tabular-nums; }
-.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #dce4df; }
-.tab { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border-bottom: 2px solid transparent; color: #66736b; font-size: 12px; font-weight: 650; text-decoration: none; }
+.tabs { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; border-bottom: 1px solid #dce4df; scrollbar-width: thin; }
+.tab { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border-bottom: 2px solid transparent; color: #66736b; font-size: 12px; font-weight: 650; text-decoration: none; touch-action: manipulation; }
 .tab:hover { color: #0c693f; }
 .tabActive { border-bottom-color: #0d844b; color: #0c693f; }
 .filterRow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .filterRow label { color: #526057; font-size: 12px; font-weight: 650; }
 .formStack { display: flex; flex-direction: column; gap: 16px; }
 .contentText { color: #435149; font-size: 13px; line-height: 1.65; }
+.authError { margin: 0; padding: 10px 12px; border: 1px solid #d33145; border-radius: 6px; color: #a61d32; font-size: 13px; }
 .list { display: flex; flex-direction: column; gap: 10px; }
 .announcement { display: flex; flex-direction: column; gap: 9px; padding: 16px; border: 1px solid #dce4df; border-radius: 7px; background: #fff; }
 .announcementHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -71,6 +72,15 @@
 .discussion p { margin: 0; color: #526057; font-size: 12px; line-height: 1.55; }
 .discussionMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #87948c; font-size: 10px; }
 .discussionActions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 5px; }
+.chatMessages { display: flex; flex-direction: column; gap: 10px; max-height: min(58vh, 680px); overflow-y: auto; margin-top: 18px; padding: 14px; border: 1px solid #dce4df; border-radius: 7px; background: #f5f7f6; }
+.chatMessage { align-self: flex-start; width: min(88%, 620px); padding: 10px 12px; border: 1px solid #dce4df; border-radius: 12px 12px 12px 3px; background: #fff; }
+.chatMessageMeta { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; color: #0c693f; font-size: 11px; }
+.chatMessageMeta time { color: #87948c; font-size: 10px; }
+.chatMessage p { margin: 0; color: #34443a; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.chatComposer { position: sticky; bottom: calc(72px + env(safe-area-inset-bottom)); }
+.chatComposeRow { display: flex; align-items: flex-end; gap: 8px; }
+.chatInput { flex: 1; min-height: 48px; max-height: 140px; resize: vertical; }
+.chatComposeRow :global(button) { flex: 0 0 48px; min-width: 48px; min-height: 48px; padding: 0; }
 .managerMatch { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
 .statusDot { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: #d68600; }
 .unreadNotification { border-left: 3px solid #2563d8; background: #f7faff; }
@@ -81,6 +91,15 @@
 .timelineDot::before { content: ""; width: 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: #41bf7b; }
 .timelineDot::after { position: absolute; top: 13px; bottom: 0; width: 1px; background: #dce4df; content: ""; }
 .timelineItem:last-child .timelineDot::after { display: none; }
+.eventCompartments { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 16px; align-items: stretch; }
+.eventTeamHeading { padding: 9px 10px; border-bottom: 1px solid #dce4df; color: #526057; font-size: 11px; font-weight: 700; text-align: center; }
+.compartmentEvent { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 48px; padding: 7px 9px; border-radius: 6px; background: #f4f7f5; color: #34443a; font-size: 12px; }
+.compartmentEvent > strong { flex: 0 0 auto; color: #0c693f; font-variant-numeric: tabular-nums; }
+.compartmentEvent > span { min-width: 0; overflow-wrap: anywhere; }
+.homeEvent { grid-column: 1; }
+.awayEvent { grid-column: 2; }
+.neutralEvent { grid-column: 1 / -1; justify-content: center; border: 1px dashed #cbd7cf; background: transparent; }
+.compartmentEvent :global(button) { flex: 0 0 auto; margin-left: auto; }
 .metricGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
 .metric { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 15px; border: 1px solid #dce4df; border-radius: 7px; background: #fff; }
 .metric span { color: #69766e; font-size: 11px; }
@@ -115,6 +134,7 @@
 :global([data-theme="dark"]) .eyebrow, :global([data-theme="dark"]) .textLink { color: #74d69f; }
 :global([data-theme="dark"]) .pageTitle, :global([data-theme="dark"]) .sectionHeading h2, :global([data-theme="dark"]) .panelTitle { color: #edf4ef; }
 :global([data-theme="dark"]) .pageDescription, :global([data-theme="dark"]) .emptyState p, :global([data-theme="dark"]) .contentText { color: #b9c8bf; }
+:global([data-theme="dark"]) .authError { border-color: #fb7185; color: #fb7185; }
 :global([data-theme="dark"]) .panel, :global([data-theme="dark"]) .matchCard, :global([data-theme="dark"]) .announcement, :global([data-theme="dark"]) .discussion, :global([data-theme="dark"]) .metric, :global([data-theme="dark"]) .qrPanel, :global([data-theme="dark"]) .consoleScore { background: #131c17; border-color: #34443a; }
 :global([data-theme="dark"]) .matchCard:hover { border-color: #4f8463; }
 :global([data-theme="dark"]) .liveMatch { background: linear-gradient(110deg, #102218, #131c17 75%); border-color: #3d7552; }
@@ -122,6 +142,14 @@
 :global([data-theme="dark"]) .matchMeta, :global([data-theme="dark"]) .matchVenue, :global([data-theme="dark"]) .scheduleMeta, :global([data-theme="dark"]) .standingHead, :global([data-theme="dark"]) .standingRow, :global([data-theme="dark"]) .leaderInfo span, :global([data-theme="dark"]) .announcement p, :global([data-theme="dark"]) .discussion p, :global([data-theme="dark"]) .dataNote, :global([data-theme="dark"]) .announcementMeta { color: #b9c8bf; }
 :global([data-theme="dark"]) .standingHead, :global([data-theme="dark"]) .standingRow, :global([data-theme="dark"]) .leaderRow, :global([data-theme="dark"]) .dataTable td, :global([data-theme="dark"]) .dataTable th, :global([data-theme="dark"]) .spacer { border-color: #26352c; }
 :global([data-theme="dark"]) .tabs { border-color: #34443a; }
+:global([data-theme="dark"]) .eventTeamHeading { border-color: #34443a; color: #b9c8bf; }
+:global([data-theme="dark"]) .chatMessages { border-color: #34443a; background: #0b110e; }
+:global([data-theme="dark"]) .chatMessage { border-color: #34443a; background: #18231d; }
+:global([data-theme="dark"]) .chatMessageMeta { color: #74d69f; }
+:global([data-theme="dark"]) .chatMessageMeta time, :global([data-theme="dark"]) .chatMessage p { color: #b9c8bf; }
+:global([data-theme="dark"]) .compartmentEvent { background: #18231d; color: #d4e0d8; }
+:global([data-theme="dark"]) .neutralEvent { border-color: #34443a; background: transparent; }
+:global([data-theme="dark"]) .compartmentEvent > strong { color: #74d69f; }
 :global([data-theme="dark"]) .tab { color: #b9c8bf; }
 :global([data-theme="dark"]) .tabActive { border-color: #41bf7b; color: #74d69f; }
 :global([data-theme="dark"]) .emptyState { border-color: #34443a; }

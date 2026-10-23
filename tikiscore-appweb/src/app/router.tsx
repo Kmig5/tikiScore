@@ -6,7 +6,7 @@ import type { Permission } from "../domain/types";
 import AppShell from "./layout/AppShell";
 import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage } from "../pages/PublicPages";
 import { CommunityPage, DiscussionPage } from "../pages/CommunityPages";
-import { NotificationsPage, ProfilePage } from "../pages/PersonalPages";
+import { AuthenticationPage, NotificationsPage, PreferencesPage, ProfilePage } from "../pages/PersonalPages";
 import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, ScheduleManagementPage, SettingsPage, SharingPage, TeamsManagementPage } from "../pages/ManagementPages";
 import { EmptyState, PageHeader } from "../pages/shared";
 import styles from "../pages/pages.module.css";
@@ -39,6 +39,9 @@ function RouteContent() {
       <Route path="communiques" element={<AnnouncementsPage />} />
       <Route path="notifications" element={<NotificationsPage />} />
       <Route path="profil" element={<ProfilePage />} />
+      <Route path="parametres" element={<PreferencesPage />} />
+      <Route path="connexion" element={<AuthenticationPage />} />
+      <Route path="inscription" element={<AuthenticationPage register />} />
       <Route path="gestion" element={<PermissionRoute permission="competition:manage"><ManagementHomePage /></PermissionRoute>} />
       <Route path="gestion/matchs" element={<PermissionRoute permission="match:manage:assigned"><ManagerMatchesPage /></PermissionRoute>} />
       <Route path="gestion/matchs/:id/live" element={<PermissionRoute permission="match:manage:assigned"><LiveConsolePage /></PermissionRoute>} />

@@ -3,7 +3,7 @@ import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
-import type { Match, Standing } from "../domain/types";
+import type { Match, Standing, TikiScoreData } from "../domain/types";
 import { useTikiScoreData } from "../app/hooks";
 import styles from "./pages.module.css";
 
@@ -81,9 +81,9 @@ export function StandingList({ standings, compact = false }: { standings: Standi
   </div>;
 }
 
-export function LeaderboardList({ metric = "goals", limit = 5 }: { metric?: "goals" | "assists" | "cards"; limit?: number }) {
+export function LeaderboardList({ metric = "goals", limit = 5, entries }: { metric?: "goals" | "assists" | "cards"; limit?: number; entries?: TikiScoreData["leaderboard"] }) {
   const data = useTikiScoreData();
-  const sorted = [...data.leaderboard].sort((first, second) => {
+  const sorted = [...(entries ?? data.leaderboard)].sort((first, second) => {
     const value = (entry: typeof first) => metric === "cards" ? entry.yellowCards + entry.redCards * 2 : entry[metric];
     return value(second) - value(first);
   }).slice(0, limit);
