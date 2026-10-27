@@ -7,7 +7,6 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.tikiscore_server.audit.AuditService;
-import com.tikiscore_server.championat.Championat;
 import com.tikiscore_server.championat.ChampionatService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

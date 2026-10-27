@@ -41,6 +41,14 @@ public class ChampionatService {
     }
 
     public ChampionatResponse getPublicChampionat() {
+        return ChampionatResponse.from(requirePublicChampionat(), publicUrl);
+    }
+
+    public UUID getPublicChampionatId() {
+        return requirePublicChampionat().getId();
+    }
+
+    private Championat requirePublicChampionat() {
         List<Championat> publicChampionnats = championatRepository
                 .findAllByStatusInOrderByStartDateAsc(PUBLIC_STATUSES);
         if (publicChampionnats.isEmpty()) {
@@ -49,7 +57,7 @@ public class ChampionatService {
         if (publicChampionnats.size() > 1) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Plusieurs championnats publics sont configurés.");
         }
-        return ChampionatResponse.from(publicChampionnats.getFirst(), publicUrl);
+        return publicChampionnats.getFirst();
     }
 
     public ChampionatResponse getAdminChampionat() {
