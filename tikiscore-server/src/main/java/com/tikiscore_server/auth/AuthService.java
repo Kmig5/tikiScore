@@ -10,7 +10,6 @@ import com.tikiscore_server.role.Role;
 import com.tikiscore_server.role.RoleName;
 import com.tikiscore_server.role.RoleRepository;
 import com.tikiscore_server.security.ApiTokenFilter;
-import com.tikiscore_server.security.Permission;
 import com.tikiscore_server.security.RolePermissions;
 import com.tikiscore_server.user.User;
 import com.tikiscore_server.user.UserRepository;
@@ -21,6 +20,7 @@ import java.util.Base64;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -76,9 +77,12 @@ public class AuthService {
     public IssuedSession login(LoginRequest request) {
         User user = userRepository.findByUsernameIgnoreCase(request.username().strip())
                 .orElseThrow(AuthService::invalidCredentials);
+        log.info("Le user est: {} ", user);
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Mot de passe ne correspond pas");
             throw invalidCredentials();
         }
+        log.info("Session créee avec succès");
         return createSession(user);
     }
 

@@ -11,6 +11,8 @@ public interface ChampionatRepository extends JpaRepository<Championat, UUID> {
 
     @EntityGraph(attributePaths = "organisateur")
     List<Championat> findAllByStatusInOrderByStartDateAsc(List<ChampionatStatus> statuses);
+    
+    Optional<Championat> findBySlug(String slug);
 
     boolean existsBySlugIgnoreCase(String slug);
 }

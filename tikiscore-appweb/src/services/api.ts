@@ -1,6 +1,6 @@
 import type { Announcement, Championship, ChampionshipNotification, ChampionshipStatistics, Discussion, DiscussionReply, ForumReport, Group, LeaderboardEntry, Match, MatchEvent, MatchEventInput, MatchStatus, Player, Standing, Team, TikiScoreData } from "../domain/types";
 
-const apiBase = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 let accessToken: string | null = null;
 let csrfToken: string | null = null;
 let csrfHeader = "X-XSRF-TOKEN";
@@ -93,7 +93,7 @@ async function ensureCsrf(): Promise<void> {
 
 async function refreshSession(): Promise<AuthenticatedUser | null> {
   try {
-    await ensureCsrf();
+    //await ensureCsrf();
     const result = await request<TokenResponse>("/auth/refresh", { method: "POST" });
     accessToken = result.accessToken;
     authenticatedUser = result.user;
@@ -137,21 +137,22 @@ export const tikiScoreApi = {
   set accessToken(value: string | null) { accessToken = value; },
 
   async signIn(username: string, password: string): Promise<AuthenticatedUser> {
-    await ensureCsrf();
+    //await ensureCsrf();
     const result = await request<TokenResponse>("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
     accessToken = result.accessToken;
     authenticatedUser = result.user;
     return result.user;
   },
   async register(username: string, displayName: string, password: string): Promise<AuthenticatedUser> {
-    await ensureCsrf();
+    //await ensureCsrf();
     const result = await request<TokenResponse>("/auth/register", { method: "POST", body: JSON.stringify({ username, displayName, password }) });
     accessToken = result.accessToken;
     authenticatedUser = result.user;
+    console.log("User Authentifié est : ", authenticatedUser)
     return result.user;
   },
   async restoreSession(): Promise<AuthenticatedUser | null> {
-    await ensureCsrf();
+    //await ensureCsrf();
     authenticatedUser = await refreshSession();
     return authenticatedUser;
   },
