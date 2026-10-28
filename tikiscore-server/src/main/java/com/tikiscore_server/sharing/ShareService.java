@@ -45,7 +45,7 @@ public class ShareService {
         return new ShareResponse("TikiScore", "Suivez le championnat sur TikiScore", publicUrl, null);
     }
 
-    public ShareResponse getAdminShare() {
+    public ShareResponse getAdminShare() throws IOException {
         UUID championshipId = championatService.getConfiguredChampionatId();
         return new ShareResponse("TikiScore", "Accès privé au QR code officiel", publicUrl,
                 storage.exists(championshipId) ? "/api/admin/competition/qr-code" : null);

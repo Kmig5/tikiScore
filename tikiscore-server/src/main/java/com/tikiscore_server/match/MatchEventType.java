@@ -1,6 +1,6 @@
 package com.tikiscore_server.match;
 
-import tools.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum MatchEventType {
     MATCH_STARTED,

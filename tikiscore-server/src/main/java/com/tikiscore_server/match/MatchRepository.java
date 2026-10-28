@@ -1,9 +1,11 @@
 package com.tikiscore_server.match;
 
+import com.tikiscore_server.match.dto.MatchResponse;
+import jakarta.persistence.LockModeType;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -27,4 +29,10 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
 
     @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group", "assignedManagers"})
     List<Match> findAllByAssignedManagers_IdAndChampionship_IdOrderByStartsAtAsc(UUID managerId, UUID championshipId);
+
+    @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group"})
+    List<Match> findAllByChampionship_IdAndStartsAtBetweenOrderByStartsAtAsc(UUID championshipId, Instant start, Instant end);
+
+    @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group"})
+    List<Match> findAllByChampionship_IdAndStatusAndStartsAtAfterOrderByStartsAtAsc(UUID championshipId, MatchStatus status, Instant startsAt);
 }

@@ -29,8 +29,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -93,7 +93,7 @@ public class MatchService {
         Instant start = today.atStartOfDay(zone).toInstant();
         Instant end = today.plusDays(1).atStartOfDay(zone).toInstant().minusNanos(1);
         return matchRepository.findAllByChampionship_IdAndStartsAtBetweenOrderByStartsAtAsc(
-            championshipId, start, end).stream().map(MatchResponse::from).toList();
+                championshipId, start, end).stream().map(MatchResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -142,25 +142,27 @@ public class MatchService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Seul un match programmé peut être modifié.");
         }
         boolean scheduleChanged = !match.getStartsAt().equals(request.startsAt())
-            || !java.util.Objects.equals(match.getVenue(), request.venue());
+                || !java.util.Objects.equals(match.getVenue(), request.venue());
         applySchedule(match, request.startsAt(), request.venue(), request.groupId(),
                 request.homeTeamId(), request.awayTeamId(), match.getChampionship().getId());
         Match saved = matchRepository.save(match);
-        if (scheduleChanged) notificationService.notifyScheduleChange(saved, NotificationType.SCHEDULE_CHANGED);
+        if (scheduleChanged) {
+            notificationService.notifyScheduleChange(saved, NotificationType.SCHEDULE_CHANGED);
+        }
         return MatchResponse.from(saved);
     }
 
-        @Transactional
-        public MatchResponse postpone(UUID matchId, UUID actorId) {
+    @Transactional
+    public MatchResponse postpone(UUID matchId, UUID actorId) {
         return changeScheduleStatus(matchId, actorId, MatchStatus.POSTPONED,
-            MatchEventType.MATCH_POSTPONED, NotificationType.MATCH_POSTPONED);
-        }
+                MatchEventType.MATCH_POSTPONED, NotificationType.MATCH_POSTPONED);
+    }
 
-        @Transactional
-        public MatchResponse cancel(UUID matchId, UUID actorId) {
+    @Transactional
+    public MatchResponse cancel(UUID matchId, UUID actorId) {
         return changeScheduleStatus(matchId, actorId, MatchStatus.CANCELLED,
-            MatchEventType.MATCH_CANCELLED, NotificationType.MATCH_CANCELLED);
-        }
+                MatchEventType.MATCH_CANCELLED, NotificationType.MATCH_CANCELLED);
+    }
 
     @Transactional
     public MatchResponse assignManagers(UUID matchId, AssignManagersRequest request, UUID actorId) {
@@ -172,13 +174,13 @@ public class MatchService {
         List<User> managers = userRepository.findAllById(managerIds);
         if (managers.size() != managerIds.size()
                 || managers.stream().anyMatch(user -> user.getRoles().stream()
-                        .noneMatch(role -> role.getName() == RoleName.MATCH_MANAGER))) {
+                .noneMatch(role -> role.getName() == RoleName.MATCH_MANAGER))) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                     "Chaque utilisateur affecté doit posséder le rôle gestionnaire de match.");
         }
         match.setAssignedManagers(new HashSet<>(managers));
         auditService.record(actorId, "MATCH_MANAGERS_ASSIGNED", "Match", match.getId(),
-            "managerCount=" + managers.size());
+                "managerCount=" + managers.size());
         return MatchResponse.from(matchRepository.save(match));
     }
 
@@ -197,18 +199,24 @@ public class MatchService {
         match.setStatus(target);
         Match saved = matchRepository.save(match);
         MatchEventType eventType = switch (target) {
-                case LIVE_FIRST_HALF -> current == MatchStatus.PAUSED
-                    ? MatchEventType.MATCH_RESUMED : MatchEventType.MATCH_STARTED;
-            case HALF_TIME -> MatchEventType.HALF_TIME_STARTED;
-            case LIVE_SECOND_HALF -> current == MatchStatus.HALF_TIME
+            case LIVE_FIRST_HALF ->
+                current == MatchStatus.PAUSED
+                ? MatchEventType.MATCH_RESUMED : MatchEventType.MATCH_STARTED;
+            case HALF_TIME ->
+                MatchEventType.HALF_TIME_STARTED;
+            case LIVE_SECOND_HALF ->
+                current == MatchStatus.HALF_TIME
                 ? MatchEventType.SECOND_HALF_STARTED : MatchEventType.MATCH_RESUMED;
-            case PAUSED -> MatchEventType.MATCH_PAUSED;
-            case FINISHED -> MatchEventType.MATCH_ENDED;
-            default -> throw new ResponseStatusException(HttpStatus.CONFLICT, "Transition de match invalide.");
+            case PAUSED ->
+                MatchEventType.MATCH_PAUSED;
+            case FINISHED ->
+                MatchEventType.MATCH_ENDED;
+            default ->
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Transition de match invalide.");
         };
         MatchEvent event = appendEvent(saved, requireUser(managerId), eventType, "lifecycle-" + UUID.randomUUID());
         auditService.record(managerId, "MATCH_STATUS_CHANGED", "Match", matchId,
-            current.name() + "->" + target.name());
+                current.name() + "->" + target.name());
         notificationService.notifyMatchEvent(saved, event);
         publish(saved, event);
         return MatchResponse.from(saved);
@@ -274,7 +282,7 @@ public class MatchService {
         Player relatedPlayer = request.relatedPlayerId() == null ? null : requireTeamPlayer(request.relatedPlayerId(), team);
         if (request.type() == MatchEventType.SUBSTITUTION && player.getId().equals(relatedPlayer.getId())) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
-                "Le joueur entrant doit être différent du joueur sortant.");
+                    "Le joueur entrant doit être différent du joueur sortant.");
         }
         int homeScore = match.getHomeScore();
         int awayScore = match.getAwayScore();
@@ -290,11 +298,14 @@ public class MatchService {
             if (team == null) {
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "L'équipe créditée est requise.");
             }
-                boolean scoreForHome = request.type() == MatchEventType.OWN_GOAL
+            boolean scoreForHome = request.type() == MatchEventType.OWN_GOAL
                     ? team.getId().equals(match.getAwayTeam().getId())
                     : team.getId().equals(match.getHomeTeam().getId());
-                if (scoreForHome) homeScore++;
-                else awayScore++;
+            if (scoreForHome) {
+                homeScore++;
+            } else {
+                awayScore++;
+            }
         }
         MatchEvent event = new MatchEvent();
         event.setMatch(match);
@@ -317,7 +328,7 @@ public class MatchService {
         MatchEvent savedEvent = eventRepository.save(event);
         if (isScoreEvent(request.type())) {
             auditService.record(managerId, "MATCH_SCORE_EVENT", "MatchEvent", savedEvent.getId(),
-                request.type().name() + ";sequence=" + savedEvent.getSequence());
+                    request.type().name() + ";sequence=" + savedEvent.getSequence());
         }
         notificationService.notifyMatchEvent(match, savedEvent);
         publish(match, savedEvent);
@@ -343,7 +354,7 @@ public class MatchService {
         matchRepository.save(match);
         MatchEvent savedEvent = eventRepository.save(event);
         auditService.record(managerId, "MATCH_EVENT_CANCELLED", "MatchEvent", savedEvent.getId(),
-            "matchId=" + matchId + ";sequence=" + savedEvent.getSequence());
+                "matchId=" + matchId + ";sequence=" + savedEvent.getSequence());
         publish(match, savedEvent);
         return MatchEventResponse.from(savedEvent);
     }
@@ -352,7 +363,7 @@ public class MatchService {
     public List<MatchEventResponse> getEvents(UUID matchId, long afterSequence) {
         Match match = requireMatch(matchId, championatService.getPublicChampionatId());
         return eventRepository.findAllByMatch_IdAndSequenceGreaterThanOrderBySequenceAsc(
-            match.getId(), Math.max(afterSequence, 0))
+                match.getId(), Math.max(afterSequence, 0))
                 .stream().map(MatchEventResponse::from).toList();
     }
 
@@ -368,10 +379,13 @@ public class MatchService {
             } else if (active.getType() == MatchEventType.GOAL || active.getType() == MatchEventType.PENALTY_GOAL
                     || active.getType() == MatchEventType.OWN_GOAL) {
                 boolean scoreForHome = active.getType() == MatchEventType.OWN_GOAL
-                    ? active.getTeam().getId().equals(match.getAwayTeam().getId())
-                    : active.getTeam().getId().equals(match.getHomeTeam().getId());
-                if (scoreForHome) home++;
-                else away++;
+                        ? active.getTeam().getId().equals(match.getAwayTeam().getId())
+                        : active.getTeam().getId().equals(match.getHomeTeam().getId());
+                if (scoreForHome) {
+                    home++;
+                } else {
+                    away++;
+                }
             }
         }
         match.setHomeScore(home);
@@ -482,8 +496,12 @@ public class MatchService {
     }
 
     private Equipe requireParticipantTeam(Match match, UUID teamId) {
-        if (teamId.equals(match.getHomeTeam().getId())) return match.getHomeTeam();
-        if (teamId.equals(match.getAwayTeam().getId())) return match.getAwayTeam();
+        if (teamId.equals(match.getHomeTeam().getId())) {
+            return match.getHomeTeam();
+        }
+        if (teamId.equals(match.getAwayTeam().getId())) {
+            return match.getAwayTeam();
+        }
         throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "L'équipe ne participe pas à ce match.");
     }
 

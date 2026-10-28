@@ -19,7 +19,8 @@ public record MatchResponse(
         int awayScore,
         int minute,
         long version
-) {
+        ) {
+
     public static MatchResponse from(Match match) {
         return new MatchResponse(
                 match.getId(),
@@ -40,12 +41,18 @@ public record MatchResponse(
 
     private static String mapStatus(MatchStatus status) {
         return switch (status) {
-            case SCHEDULED -> "scheduled";
-            case LIVE_FIRST_HALF, LIVE_SECOND_HALF, PAUSED -> "live";
-            case HALF_TIME -> "halftime";
-            case FINISHED -> "finished";
-            case POSTPONED -> "postponed";
-            case CANCELLED, ABANDONED -> "cancelled";
+            case SCHEDULED ->
+                "scheduled";
+            case LIVE_FIRST_HALF, LIVE_SECOND_HALF, PAUSED ->
+                "live";
+            case HALF_TIME ->
+                "halftime";
+            case FINISHED ->
+                "finished";
+            case POSTPONED ->
+                "postponed";
+            case CANCELLED, ABANDONED ->
+                "cancelled";
         };
     }
 }
