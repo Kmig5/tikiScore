@@ -1,4 +1,4 @@
-import { ArrowLeft, Bell, Settings2, Share2, Volleyball } from "lucide-react";
+import { Bell, LogOut, Share2, Volleyball } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDemoAccess } from "../useDemoAccess";
 import { getVisibleNavigation } from "../navigation";
@@ -30,14 +30,12 @@ export default function AppShell() {
           <span className={styles.brandName}>Tiki<span>Score</span></span>
         </NavLink>
         <div className={styles.headerRight}>
-          <span className={styles.connectionFlag}><span />API</span>
           {championshipOptions.length > 1 && <Select label="Championnat actif" fullWidth={false} options={championshipOptions.map((championship) => ({ value: championship.id, label: championship.name }))} value={getActiveChampionshipId() ?? ""} onChange={(event) => { void switchChampionship(event.target.value).then(() => navigate("/")).catch((error: unknown) => console.error("Échec du changement de championnat.", error)); }} />}
-          {user ? <><span className={styles.userName}>{user.displayName}</span><button className={styles.signOutButton} type="button" onClick={() => { void signOut().catch((error: unknown) => console.error("Échec de la déconnexion.", error)); }}>Déconnexion</button></> : <Link className={styles.signInLink} to="/connexion">Connexion</Link>}
+          {user ? <><span className={styles.userName}>{user.displayName}</span><button className={styles.signOutButton} type="button" title="Déconnexion" aria-label="Déconnexion" onClick={() => { void signOut().catch((error: unknown) => console.error("Échec de la déconnexion.", error)); }}><LogOut size={18} aria-hidden="true" /></button></> : <Link className={styles.signInLink} to="/connexion">Connexion</Link>}
           <NavLink className={styles.headerIcon} to="/notifications" aria-label={`Notifications, ${unreadCount} non lues`}>
             <Bell size={20} aria-hidden="true" />
             {unreadCount > 0 && <span className={styles.notificationBadge}>{unreadCount}</span>}
           </NavLink>
-          <NavLink className={styles.headerIcon} to="/parametres" aria-label="Paramètres"><Settings2 size={20} aria-hidden="true" /></NavLink>
         </div>
       </header>
 
@@ -72,10 +70,6 @@ export default function AppShell() {
         </aside>
 
         <main className={`${styles.main} ${isManagement ? styles.managementMain : ""}`} id="main-content" tabIndex={-1}>
-          {location.pathname !== "/" && <button className={styles.backButton} type="button" onClick={() => {
-            if (window.history.state?.idx > 0) navigate(-1);
-            else navigate("/");
-          }}><ArrowLeft size={17} aria-hidden="true" />Retour</button>}
           {dataStatus.state !== "ready" && <div className={`${styles.apiNotice} ${dataStatus.state === "error" ? styles.apiError : ""}`} role={dataStatus.state === "error" ? "alert" : "status"}>
             <span>{dataStatus.message}</span>{dataStatus.state === "error" && <button type="button" onClick={() => { void tikiScoreService.refresh(); }}>Réessayer</button>}
           </div>}

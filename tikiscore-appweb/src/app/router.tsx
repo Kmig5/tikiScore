@@ -19,7 +19,7 @@ function PermissionRoute({ permission, children, draftAllowed = false }: { permi
     return <div className={styles.page}><PageHeader eyebrow="Configuration initiale" title="Activation requise" description="Les outils de gestion globale seront disponibles après l’activation du championnat." /><EmptyState title="Terminez la préparation" body="Configurez les rôles, les poules, les équipes et le calendrier avant de rendre le championnat public." action={<Link to="/gestion"><Button>Revenir à la préparation</Button></Link>} /></div>;
   }
   if (!permissions.includes(permission)) {
-    return <div className={styles.page}><PageHeader eyebrow="Accès de démonstration" title="Cette vue n’est pas activée" description="Choisis un profil d’aperçu dans l’en-tête pour parcourir cet espace." /><EmptyState title="Permission d’aperçu manquante" body={`Permission requise : ${permission}. Ceci ne remplace pas le contrôle d’accès du serveur.`} /></div>;
+     return <div className={styles.page}><PageHeader eyebrow="Accès restreint" title="Cette page n’est pas accessible" description="Votre compte ne dispose pas des autorisations nécessaires pour cette page." /><EmptyState title="Autorisation requise" body={`Cette action nécessite la permission ${permission}.`} /></div>;
   }
   return children;
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { ArrowRight, CalendarDays, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, CalendarDays, MapPin } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
 import type { Match, Standing, TikiScoreData } from "../domain/types";
@@ -8,10 +8,30 @@ import { useTikiScoreData } from "../app/hooks";
 import styles from "./pages.module.css";
 
 export function PageHeader({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const showBack = location.pathname !== "/";
+
+  function goBack() {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
+    }
+    const fallback = location.pathname.startsWith("/communaute/") ? "/communaute"
+      : location.pathname.startsWith("/matchs/") ? "/matchs"
+        : location.pathname.startsWith("/gestion/matchs/") ? "/gestion/matchs"
+          : location.pathname.startsWith("/gestion/") && location.pathname !== "/gestion/nouveau" ? "/gestion"
+            : "/";
+    navigate(fallback);
+  }
+
   return <div className={styles.pageHeader}>
-    <div>
+    <div className={styles.pageHeaderMain}>
       {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
-      <h1 className={styles.pageTitle}>{title}</h1>
+      <div className={styles.pageTitleRow}>
+        {showBack && <button className={styles.pageBackButton} type="button" title="Retour" aria-label="Retour" onClick={goBack}><ArrowLeft size={19} aria-hidden="true" /></button>}
+        <h1 className={styles.pageTitle}>{title}</h1>
+      </div>
       {description && <p className={styles.pageDescription}>{description}</p>}
     </div>
     {action && <div className={styles.pageAction}>{action}</div>}
@@ -63,7 +83,7 @@ export function MatchCard({ match }: { match: Match }) {
   </Link>;
 }
 
-export function StandingList({ standings, compact = false }: { standings: Standing[]; compact?: boolean }) {
+export function StandingList({ standings }: { standings: Standing[]; compact?: boolean }) {
   const data = useTikiScoreData();
   const sorted = [...standings].sort((first, second) => second.points - first.points || (second.goalsFor - second.goalsAgainst) - (first.goalsFor - first.goalsAgainst) || second.goalsFor - first.goalsFor);
   return <div className={styles.standingsList}>
@@ -77,7 +97,6 @@ export function StandingList({ standings, compact = false }: { standings: Standi
         <strong>{standing.points}</strong>
       </div>;
     })}
-    {!compact && <p className={styles.dataNote}>Classement de démonstration · les classements officiels sont calculés par le serveur.</p>}
   </div>;
 }
 

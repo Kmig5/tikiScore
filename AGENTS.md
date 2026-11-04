@@ -111,20 +111,21 @@ Un utilisateur peut posséder plusieurs rôles. Construire les gardes et menus �
 
 ### Téléphone
 
-La navigation principale est une barre d'onglets inférieure fixe contenant au maximum cinq destinations :
+La navigation principale est une barre d'onglets inférieure fixe contenant au maximum cinq destinations. Les quatre premières sont communes :
 
 1. `Accueil`
 2. `Matchs`
 3. `Classements`
-4. `Communauté`
-5. `Profil`
+4. `Paramètres`
+
+La cinquième destination est contextuelle et filtrée par permission : `Administration` pour l'administrateur du championnat, `Gestion des matchs` pour un gestionnaire seul, `Modération` pour un modérateur seul, ou `Communauté` par défaut. Si plusieurs rôles sont actifs, privilégier `Administration`; son centre de gestion donne accès aux autres outils autorisés. Le profil et les préférences personnelles sont regroupés dans `Paramètres`.
 
 La barre doit respecter `env(safe-area-inset-bottom)`. Le contenu principal doit réserver sa hauteur pour ne jamais être masqué. Les notifications sont accessibles depuis une cloche dans le header avec un badge non lu, et non comme sixième onglet.
 
 Les fonctions contextuelles ne doivent pas encombrer la barre principale :
 
-- le gestionnaire ouvre la console depuis un match qui lui est attribué ;
-- l'administrateur ouvre le centre de gestion depuis son profil ou une action dédiée ;
+- le gestionnaire ouvre la console depuis un match qui lui est attribué ou son accès contextuel ;
+- l'administrateur ouvre le centre de gestion depuis son accès contextuel ;
 - un raccourci contextuel peut apparaître lorsqu'un match attribué est en cours.
 
 ### Ordinateur
@@ -132,7 +133,7 @@ Les fonctions contextuelles ne doivent pas encombrer la barre principale :
 À partir d'environ `1024px`, masquer la barre inférieure et afficher une sidebar latérale. La sidebar reprend les destinations publiques et peut séparer :
 
 - navigation publique : Accueil, Matchs, Classements, Statistiques, Communauté ;
-- espace personnel : Notifications, Profil ;
+- espace personnel : Notifications, Paramètres (profil, notifications et affichage) ;
 - gestion conditionnelle : Administration, Gestion des matchs, Annonces, Modération, Paramètres ;
 - action de partage : lien public et QR code.
 

@@ -52,7 +52,7 @@ export function DiscussionPage() {
   const { success, error } = useToast();
   const [message, setMessage] = useState("");
   const discussion = data.discussions.find((entry) => entry.id === discussionId);
-  if (!discussion || discussion.hidden) return <div className={styles.page}><PageHeader title="Conversation indisponible" /><EmptyState title="Cette conversation n’est pas disponible" body="Elle a été retirée ou n’existe pas." action={<Link to="/communaute"><Button variant="secondary">Retour à la communauté</Button></Link>} /></div>;
+  if (!discussion || discussion.hidden) return <div className={styles.page}><PageHeader title="Conversation indisponible" /><EmptyState title="Cette conversation n’est pas disponible" body="Elle a été retirée ou n’existe pas." /></div>;
   const canReply = hasPermission(permissions, "forum:participate") && !discussion.closed;
 
   function sendMessage(event: FormEvent<HTMLFormElement>) {
@@ -60,11 +60,9 @@ export function DiscussionPage() {
     if (!discussion || !message.trim()) return;
     void tikiScoreService.addReply(discussion.id, message.trim()).then(() => success("Message envoyé.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "L’envoi du message a échoué."));
     setMessage("");
-    success("Message ajouté à cette démonstration.");
   }
 
   return <div className={styles.page}>
-    <Link className={styles.textLink} to="/communaute">← Retour au forum</Link>
     <article className={styles.discussion}>
       <div className={styles.discussionMeta}><Badge variant="neutral">{discussion.category}</Badge>{discussion.pinned && <Badge variant="warning"><Pin size={12} aria-hidden="true" />Épinglée</Badge>}{discussion.closed && <Badge variant="neutral">Conversation fermée</Badge>}</div>
       <PageHeader title={discussion.title} description="Conversation du championnat" />

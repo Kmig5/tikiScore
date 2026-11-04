@@ -1,9 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { BellCheck, CheckCheck, UserRound } from "lucide-react";
+import { CheckCheck, UserRound } from "lucide-react";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
 import Checkbox from "../composants/ui/Checkbox";
-import Select from "../composants/ui/Select";
 import ThemeToggle from "../composants/ui/ThemeToggle";
 import { useDemoAccess } from "../app/useDemoAccess";
 import { useTikiScoreData } from "../app/hooks";
@@ -12,7 +11,7 @@ import { tikiScoreService } from "../services/tikiScoreService";
 import { ApiError } from "../services/api";
 import { tikiScoreApi } from "../services/api";
 import { useToast } from "../contexts/useToast";
-import { useNavigate, Link } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { EmptyState, PageHeader } from "./shared";
 import styles from "./pages.module.css";
 
@@ -39,17 +38,17 @@ export function NotificationsPage() {
       <p>{notification.message}</p><span className={styles.announcementMeta}>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(notification.createdAt))}</span>
       {!notification.read && canManage && <Button size="small" variant="ghost" onClick={() => { void tikiScoreService.markNotificationRead(notification.id).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de mettre la notification à jour.")); }}>Marquer comme lue</Button>}
     </article>)}</div> : <EmptyState title="Aucune notification" body="Les informations importantes du championnat apparaîtront ici." />}
-    {!canManage && <div className={styles.warningBox}><BellCheck size={16} aria-hidden="true" />Les préférences de notification sont visibles dans le profil aperçu membre. Aucune notification réelle n’est envoyée.</div>}
+    {!canManage && <div className={styles.warningBox}>La consultation et la gestion des notifications nécessitent un compte membre de ce championnat.</div>}
   </div>;
 }
 
-export function ProfilePage() {
-  const data = useTikiScoreData();
-  const { user, permissions } = useDemoAccess();
+function AccountSettingsSections() {
+  const { user, permissions, refreshCurrentUser } = useDemoAccess();
   const { error, success } = useToast();
   const canManage = hasPermission(permissions, "profile:update");
   const canManageNotifications = hasPermission(permissions, "notifications:manage");
-  const [teamId, setTeamId] = useState(data.teams[0]?.id ?? "");
+  const [profileName, setProfileName] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [preferences, setPreferences] = useState<Record<string, boolean>>({ matchReminder: true, matchStart: true, liveGoals: false, scheduleChanges: true, officialNews: true, forumReplies: false });
   useEffect(() => {
     if (!canManageNotifications) return;
@@ -62,6 +61,23 @@ export function ProfilePage() {
       forumReplies: saved.forumReplies,
     })).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de charger les préférences."));
   }, [canManageNotifications, error]);
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const displayName = (profileName ?? user?.displayName ?? "").trim();
+    if (!displayName) return;
+    setIsSavingProfile(true);
+    try {
+      await tikiScoreApi.updateProfile({ displayName });
+      await refreshCurrentUser();
+      setProfileName(null);
+      success("Profil mis à jour.");
+    } catch (cause) {
+      error(cause instanceof Error ? cause.message : "Impossible d’enregistrer le profil.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }
 
   async function updatePreference(key: keyof typeof preferences, value: boolean) {
     const next = { ...preferences, [key]: value };
@@ -82,22 +98,20 @@ export function ProfilePage() {
     }
   }
 
-  return <div className={styles.page}>
-    <PageHeader eyebrow="Votre espace" title="Profil et préférences" description="Aucune donnée personnelle n’est demandée dans cet aperçu." />
-    <section className={styles.panel}>
+  return <>
+    <form className={`${styles.panel} ${styles.formStack}`} onSubmit={(event) => void saveProfile(event)}>
+      <h2 className={styles.panelTitle}>Compte</h2>
       <div className={styles.profileRow}><span className={styles.avatar}><UserRound size={22} aria-hidden="true" /></span><div><strong>{user?.displayName ?? "Visiteur"}</strong><p>{user ? `Compte @${user.username}` : "Aucune session authentifiée"}</p></div></div>
+      <label className={styles.fieldLabel}>Nom affiché<input className={styles.formInput} value={profileName ?? user?.displayName ?? ""} onChange={(event) => setProfileName(event.target.value)} maxLength={100} disabled={!user || !canManage} /></label>
+      {user && canManage && <Button type="submit" isLoading={isSavingProfile} loadingText="Enregistrement…" disabled={!(profileName ?? user.displayName).trim() || (profileName ?? user.displayName).trim() === user.displayName}>Enregistrer le profil</Button>}
       {!user && <div className={styles.warningBox}>Connectez-vous pour modifier votre profil et vos préférences personnelles.</div>}
-    </section>
-    <section className={styles.section}>
-      <h2 className={styles.panelTitle}>Équipe suivie</h2>
-      {canManage ? <div className={styles.panel}><Select label="Équipe favorite" options={data.teams.map((team) => ({ value: team.id, label: team.name }))} value={teamId} onChange={(event) => setTeamId(event.target.value)} helperText="Préférence disponible après raccordement de l’API de suivi d’équipe." /></div> : <div className={styles.warningBox}>Connectez-vous avec un compte autorisé pour modifier cette préférence.</div>}
-    </section>
+    </form>
     <section className={styles.panel}>
       <h2 className={styles.panelTitle}>Préférences de notification</h2>
       {canManageNotifications ? <div className={styles.formStack}>{notificationSettings.map((setting) => <Checkbox key={setting.id} label={setting.label} description={setting.description} checked={preferences[setting.id] ?? false} onChange={(event) => void updatePreference(setting.id, event.currentTarget.checked)} />)}</div> : <div className={styles.warningBox}>Connectez-vous avec un compte autorisé pour modifier les préférences de notification.</div>}
     </section>
     <p className={styles.dataNote}>Les préférences de notification sont enregistrées dans votre compte.</p>
-  </div>;
+  </>;
 }
 
 export function AuthenticationPage({ register = false }: { register?: boolean }) {
@@ -116,7 +130,7 @@ export function AuthenticationPage({ register = false }: { register?: boolean })
     try {
       if (register) await createAccount(username.trim(), displayName.trim(), password);
       else await signIn(username.trim(), password);
-      navigate("/profil", { replace: true });
+      navigate("/parametres", { replace: true });
     } catch (error) {
       setErrorMessage(error instanceof ApiError ? error.message : "Le serveur est indisponible. Réessayez.");
     } finally {
@@ -139,17 +153,16 @@ export function AuthenticationPage({ register = false }: { register?: boolean })
 }
 
 export function PreferencesPage() {
-  const [language, setLanguage] = useState(() => window.localStorage.getItem("tikiscore-language") ?? "fr");
-
   return <div className={styles.page}>
-    <PageHeader eyebrow="Votre espace" title="Paramètres" description="Préférences d’affichage de cette application sur cet appareil." />
+    <PageHeader eyebrow="Votre espace" title="Paramètres" description="Compte, notifications et préférences d’affichage." />
+    <AccountSettingsSections />
     <section className={styles.panel}>
       <h2 className={styles.panelTitle}>Apparence</h2>
       <div className={styles.discussionActions}><span className={styles.contentText}>Thème clair, sombre ou système</span><ThemeToggle /></div>
     </section>
-    <section className={styles.panel}>
-      <h2 className={styles.panelTitle}>Langue préférée</h2>
-      <Select label="Langue" options={[{ value: "fr", label: "Français" }, { value: "en", label: "English" }]} value={language} onChange={(event) => { setLanguage(event.target.value); window.localStorage.setItem("tikiscore-language", event.target.value); }} helperText="Préférence enregistrée sur cet appareil. Les traductions anglaises ne sont pas encore disponibles." />
-    </section>
   </div>;
+}
+
+export function ProfilePage() {
+  return <Navigate to="/parametres" replace />;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { ArrowRight, Radio, Share2 } from "lucide-react";
+import { ArrowRight, Radio, RotateCcw, Share2 } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
@@ -131,20 +131,43 @@ export function HomePage({ createOnly = false }: { createOnly?: boolean }) {
 export function MatchesPage() {
   const data = useTikiScoreData();
   const [filter, setFilter] = useState<"all" | "upcoming" | "results" | "live">("all");
+  const [query, setQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const filtered = useMemo(() => data.matches.filter((match) => {
     if (filter === "upcoming") return match.status === "scheduled";
     if (filter === "results") return match.status === "finished";
     if (filter === "live") return match.status === "live" || match.status === "halftime";
     return true;
-  }).sort((first, second) => first.startsAt.localeCompare(second.startsAt)), [data.matches, filter]);
+  }).filter((match) => {
+    const startsAt = new Date(match.startsAt);
+    const startBoundary = dateFrom ? new Date(`${dateFrom}T00:00:00`) : null;
+    const endBoundary = dateTo ? new Date(`${dateTo}T23:59:59.999`) : null;
+    if (startBoundary && startsAt < startBoundary) return false;
+    if (endBoundary && startsAt > endBoundary) return false;
+    const normalizedQuery = query.trim().toLocaleLowerCase("fr-FR");
+    if (!normalizedQuery) return true;
+    const home = data.teams.find((team) => team.id === match.homeTeamId)?.name ?? "";
+    const away = data.teams.find((team) => team.id === match.awayTeamId)?.name ?? "";
+    return [home, away, match.venue].some((value) => value.toLocaleLowerCase("fr-FR").includes(normalizedQuery));
+  }).sort((first, second) => filter === "results"
+    ? second.startsAt.localeCompare(first.startsAt)
+    : first.startsAt.localeCompare(second.startsAt)), [data.matches, data.teams, dateFrom, dateTo, filter, query]);
   const filters = [{ id: "all", label: "Tous" }, { id: "upcoming", label: "À venir" }, { id: "results", label: "Résultats" }, { id: "live", label: "En direct" }] as const;
+  const hasFilters = Boolean(query || dateFrom || dateTo || filter !== "all");
 
   return <div className={styles.page}>
     <PageHeader eyebrow="Compétition" title="Matchs" description="Calendrier, résultats et suivi des rencontres." />
-    <div className={styles.tabs} role="tablist" aria-label="Filtrer les matchs">
-      {filters.map((item) => <button key={item.id} type="button" role="tab" aria-selected={filter === item.id} className={`${styles.tab} ${filter === item.id ? styles.tabActive : ""}`} onClick={() => setFilter(item.id)}>{item.label}</button>)}
-    </div>
-    {filtered.length ? <div className={styles.matchGrid}>{filtered.map((match) => <MatchCard key={match.id} match={match} />)}</div> : <EmptyState title="Aucun match dans cette sélection" body="Choisissez un autre filtre ou revenez plus tard." />}
+    <section className={styles.matchesToolbar} aria-label="Filtres des matchs">
+      <label className={`${styles.fieldLabel} ${styles.matchSearch}`}>Rechercher<input className={styles.formInput} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Équipe ou terrain" /></label>
+      <label className={`${styles.fieldLabel} ${styles.matchDateFilter}`}>Du<input className={styles.formInput} type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} /></label>
+      <label className={`${styles.fieldLabel} ${styles.matchDateFilter}`}>Au<input className={styles.formInput} type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} /></label>
+      <div className={styles.matchSegments} role="group" aria-label="Statut des matchs">
+        {filters.map((item) => <button key={item.id} type="button" aria-pressed={filter === item.id} className={`${styles.matchSegment} ${filter === item.id ? styles.matchSegmentActive : ""}`} onClick={() => setFilter(item.id)}>{item.label}</button>)}
+      </div>
+      <Button className={styles.matchReset} variant="ghost" size="small" disabled={!hasFilters} title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres" onClick={() => { setQuery(""); setDateFrom(""); setDateTo(""); setFilter("all"); }}><RotateCcw size={15} aria-hidden="true" /></Button>
+    </section>
+    {filtered.length ? <><p className={styles.matchCount}>{filtered.length} rencontre{filtered.length === 1 ? "" : "s"}</p><div className={styles.matchGrid}>{filtered.map((match) => <MatchCard key={match.id} match={match} />)}</div></> : <EmptyState title="Aucun match dans cette sélection" body={hasFilters ? "Modifiez la recherche, la période ou le statut, ou réinitialisez les filtres." : "Les rencontres apparaîtront ici."} action={hasFilters ? <Button variant="secondary" onClick={() => { setQuery(""); setDateFrom(""); setDateTo(""); setFilter("all"); }}><RotateCcw size={15} aria-hidden="true" />Réinitialiser</Button> : undefined} />}
   </div>;
 }
 
@@ -165,7 +188,7 @@ function eventDescription(event: { type: string; teamId?: string; playerId?: str
 export function MatchDetailPage() {
   const { matchId = "" } = useParams();
   const data = useTikiScoreData();
-  const { permissions } = useDemoAccess();
+  const { permissions, user } = useDemoAccess();
   const match = data.matches.find((candidate) => candidate.id === matchId);
   const liveMinute = useLiveMatchMinute(match);
   const [liveConnection, setLiveConnection] = useState<LiveConnectionStatus>("disconnected");
@@ -175,10 +198,11 @@ export function MatchDetailPage() {
       void tikiScoreService.refreshMatch(match.id).catch((error: unknown) => console.error("Impossible de synchroniser le match.", error));
     });
   }, [match?.id, match?.status]);
-  if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Cette rencontre n’existe pas" body="Elle a peut-être été déplacée ou supprimée." action={<Link to="/matchs"><Button variant="secondary">Retour aux matchs</Button></Link>} /></div>;
+  if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Cette rencontre n’existe pas" body="Elle a peut-être été déplacée ou supprimée." /></div>;
   const home = data.teams.find((team) => team.id === match.homeTeamId);
   const away = data.teams.find((team) => team.id === match.awayTeamId);
-  const canManage = hasPermission(permissions, "match:manage:assigned") && (match.assignedManagerIds.includes("manager-demo") || hasPermission(permissions, "competition:manage"));
+  const canManage = hasPermission(permissions, "match:manage:assigned")
+    && (Boolean(user && match.assignedManagerIds.includes(user.id)) || hasPermission(permissions, "competition:manage"));
   const status = match.status === "live" || match.status === "halftime" ? "Direct" : match.status === "finished" ? "Terminé" : match.status === "postponed" ? "Reporté" : match.status === "cancelled" ? "Annulé" : "À venir";
 
   return <div className={styles.page}>
@@ -192,7 +216,7 @@ export function MatchDetailPage() {
     {(match.status === "live" || match.status === "halftime") && <div className={styles.liveConnection} role="status"><Radio size={16} aria-hidden="true" /><span>{liveConnection === "connected" ? "Direct synchronisé avec le serveur." : liveConnection === "reconnecting" ? "Reconnexion au direct…" : "Connexion au direct arrêtée."}</span></div>}
     <div className={styles.detailGrid}>
       <section className={styles.section}><SectionHeading title="Chronologie" />{match.events.length ? <div className={styles.eventCompartments} aria-label={`Événements, ${home?.name ?? "équipe à domicile"} contre ${away?.name ?? "équipe visiteuse"}`}><div className={styles.eventTeamHeading}>{home?.name ?? "Domicile"}</div><div className={styles.eventTeamHeading}>{away?.name ?? "Extérieur"}</div>{[...match.events].sort((first, second) => first.minute - second.minute || first.occurredAt.localeCompare(second.occurredAt)).map((event, index) => <div className={`${styles.compartmentEvent} ${event.teamId === match.awayTeamId ? styles.awayEvent : event.teamId === match.homeTeamId ? styles.homeEvent : styles.neutralEvent}`} style={{ gridRow: index + 2 }} key={event.id}><strong>{event.minute}′</strong><span>{eventDescription(event, data)}</span></div>)}</div> : <EmptyState title="Aucun événement" body="Les événements du match apparaîtront ici." />}</section>
-      <aside className={styles.panel}><h2 className={styles.panelTitle}>Informations</h2><p className={styles.contentText}>{status} · {match.venue}</p><div className={styles.spacer} /><p className={styles.dataNote}>Les résultats, événements et classements officiels seront fournis par l’API du championnat.</p></aside>
+      <aside className={styles.panel}><h2 className={styles.panelTitle}>Informations</h2><p className={styles.contentText}>{status} · {match.venue}</p></aside>
     </div>
   </div>;
 }
@@ -215,7 +239,7 @@ export function StandingsPage({ type = "teams" }: { type?: "teams" | "goals" | "
   const filteredLeaderboard = data.leaderboard.filter((entry) => groupId === "all" || data.teams.find((team) => team.id === entry.teamId)?.groupId === groupId);
 
   return <div className={styles.page}>
-    <PageHeader eyebrow="Compétition" title={title} description="Données de démonstration, en attente des classements calculés par le serveur." />
+    <PageHeader eyebrow="Compétition" title={title} description="Classements établis à partir des rencontres terminées." />
     <nav className={styles.tabs} aria-label="Types de classement">{rankingTabs.map((tab) => <Link key={tab.to} to={tab.to} aria-current={tab.to === location.pathname ? "page" : undefined} className={`${styles.tab} ${tab.to === location.pathname ? styles.tabActive : ""}`}>{tab.label}</Link>)}</nav>
     <div className={styles.filterRow}><label htmlFor="group-filter">Poule</label><Select id="group-filter" label="Poule" options={[{ value: "all", label: "Classement global · toutes les poules" }, ...data.groups.map((group) => ({ value: group.id, label: group.name }))]} value={groupId} onChange={(event) => { setGroupId(event.target.value); window.localStorage.setItem("tikiscore-ranking-group", event.target.value); }} fullWidth={false} /></div>
     {type === "teams" ? filteredStandings.length ? <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup?.name ?? "Classement global"}</h2><StandingList standings={filteredStandings} /></section> : <EmptyState title="Aucun classement disponible" body="Les classements apparaîtront dès que les données du serveur seront disponibles." /> : <section className={styles.panel}><h2 className={styles.panelTitle}>{selectedGroup?.name ?? "Classement global"}</h2><LeaderboardList metric={type} limit={filteredLeaderboard.length} entries={filteredLeaderboard} /></section>}
@@ -227,7 +251,7 @@ export function StatisticsPage() {
   const location = useLocation();
   const stats = data.statistics;
   return <div className={styles.page}>
-    <PageHeader eyebrow="Compétition" title="Statistiques" description="Indicateurs fournis par les données de démonstration. Les calculs officiels dépendront de l’API." />
+    <PageHeader eyebrow="Compétition" title="Statistiques" description="Vue d’ensemble des rencontres et des résultats du championnat." />
     <nav className={styles.tabs} aria-label="Types de classement">{rankingTabs.map((tab) => <Link key={tab.to} to={tab.to} aria-current={tab.to === location.pathname ? "page" : undefined} className={`${styles.tab} ${tab.to === location.pathname ? styles.tabActive : ""}`}>{tab.label}</Link>)}</nav>
     <div className={styles.metricGrid}>
       <div className={styles.metric}><span>Matchs joués</span><strong>{stats.matchesPlayed}</strong></div>
@@ -235,7 +259,7 @@ export function StatisticsPage() {
       <div className={styles.metric}><span>Équipes</span><strong>{stats.teamsCount}</strong></div>
       <div className={styles.metric}><span>Joueurs inscrits</span><strong>{stats.playersCount}</strong></div>
     </div>
-    <section className={styles.section}><SectionHeading title="Répartition des rencontres" /><div className={styles.panel}><div className={styles.standingsList}>{(["scheduled", "live", "finished", "postponed"] as MatchStatus[]).map((status) => <div className={styles.standingRow} key={status}><span style={{ textAlign: "left" }}>{status === "scheduled" ? "À venir" : status === "live" ? "En direct" : status === "finished" ? "Terminés" : "Reportés"}</span><span>{data.matches.filter((match) => match.status === status).length}</span><span /><strong>{data.matches.filter((match) => match.status === status).length}</strong></div>)}</div><p className={styles.dataNote}>Comptages issus du calendrier de démonstration chargé dans cette session.</p></div></section>
+    <section className={styles.section}><SectionHeading title="Répartition des rencontres" /><div className={styles.panel}><div className={styles.standingsList}>{(["scheduled", "live", "finished", "postponed"] as MatchStatus[]).map((status) => <div className={styles.standingRow} key={status}><span style={{ textAlign: "left" }}>{status === "scheduled" ? "À venir" : status === "live" ? "En direct" : status === "finished" ? "Terminés" : "Reportés"}</span><span>{data.matches.filter((match) => match.status === status).length}</span><span /><strong>{data.matches.filter((match) => match.status === status).length}</strong></div>)}</div></div></section>
   </div>;
 }
 

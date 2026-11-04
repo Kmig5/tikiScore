@@ -182,7 +182,7 @@ export function LiveConsolePage() {
     });
   }, [error, match?.id, match?.status]);
 
-  if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Rencontre introuvable" body="Retourne à la liste des matchs attribués." action={<Link to="/gestion/matchs"><Button variant="secondary">Retour</Button></Link>} /></div>;
+  if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Rencontre introuvable" body="La rencontre n’existe pas ou n’est plus disponible." /></div>;
   if (!canManage) return <div className={styles.page}><PageHeader eyebrow="Console terrain" title="Accès non autorisé" /><PermissionNotice permission="match:manage:assigned" /></div>;
 
   const home = data.teams.find((team) => team.id === match.homeTeamId);
@@ -432,7 +432,7 @@ export function ModerationPage() {
       <Button size="small" variant="secondary" onClick={() => { void updateDiscussion(discussion.id, { pinned: !discussion.pinned }).then(() => success(discussion.pinned ? "Discussion désépinglée." : "Discussion épinglée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}><Pin size={14} aria-hidden="true" />{discussion.pinned ? "Désépingler" : "Épingler"}</Button>
       <Button size="small" variant="secondary" onClick={() => { void updateDiscussion(discussion.id, { closed: !discussion.closed }).then(() => success(discussion.closed ? "Discussion rouverte." : "Discussion fermée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.closed ? "Rouvrir" : "Fermer"}</Button>
       <Button size="small" variant="danger" onClick={() => { void updateDiscussion(discussion.id, { hidden: !discussion.hidden }).then(() => success(discussion.hidden ? "Discussion réaffichée." : "Discussion masquée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.hidden ? "Réafficher" : "Masquer"}</Button>
-    </div></article>)}</div> : <EmptyState title="Aucune discussion à modérer" body="Les discussions signalées apparaîtront ici lorsque l’API de modération sera disponible." />}
+    </div></article>)}</div> : <EmptyState title="Aucune discussion à modérer" body="Les discussions nécessitant une action apparaîtront ici." />}
   </div>;
 }
 
