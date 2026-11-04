@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Outlet, Route, Routes } from "react-router-dom";
 import Button from "../composants/ui/Button";
 import { useDemoAccess } from "./useDemoAccess";
 import type { Permission } from "../domain/types";
@@ -7,16 +7,30 @@ import AppShell from "./layout/AppShell";
 import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage } from "../pages/PublicPages";
 import { CommunityPage, DiscussionPage } from "../pages/CommunityPages";
 import { AuthenticationPage, NotificationsPage, PreferencesPage, ProfilePage } from "../pages/PersonalPages";
-import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, ScheduleManagementPage, SettingsPage, SharingPage, SystemAdminPage, TeamsManagementPage } from "../pages/ManagementPages";
+import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, RolesManagementPage, ScheduleManagementPage, SettingsPage, SharingPage, SystemAdminPage, TeamsManagementPage } from "../pages/ManagementPages";
 import { EmptyState, PageHeader } from "../pages/shared";
 import styles from "../pages/pages.module.css";
+import { getActiveChampionshipId } from "../services/api";
 
-function PermissionRoute({ permission, children }: { permission: Permission; children: ReactNode }) {
-  const { permissions } = useDemoAccess();
+function PermissionRoute({ permission, children, draftAllowed = false }: { permission: Permission; children: ReactNode; draftAllowed?: boolean }) {
+  const { permissions, user } = useDemoAccess();
+  const activeChampionship = user?.championships.find((championship) => championship.id === getActiveChampionshipId());
+  if (activeChampionship?.status === "BROUILLON" && !draftAllowed) {
+    return <div className={styles.page}><PageHeader eyebrow="Configuration initiale" title="Activation requise" description="Les outils de gestion globale seront disponibles après l’activation du championnat." /><EmptyState title="Terminez la préparation" body="Configurez les rôles, les poules, les équipes et le calendrier avant de rendre le championnat public." action={<Link to="/gestion"><Button>Revenir à la préparation</Button></Link>} /></div>;
+  }
   if (!permissions.includes(permission)) {
     return <div className={styles.page}><PageHeader eyebrow="Accès de démonstration" title="Cette vue n’est pas activée" description="Choisis un profil d’aperçu dans l’en-tête pour parcourir cet espace." /><EmptyState title="Permission d’aperçu manquante" body={`Permission requise : ${permission}. Ceci ne remplace pas le contrôle d’accès du serveur.`} /></div>;
   }
   return children;
+}
+
+function PublicCompetitionRoute() {
+  const { user } = useDemoAccess();
+  const activeChampionship = user?.championships.find((championship) => championship.id === getActiveChampionshipId());
+  if (activeChampionship?.status === "BROUILLON") {
+    return <div className={styles.page}><PageHeader eyebrow="Configuration initiale" title="Championnat en préparation" /><EmptyState title="Aucune donnée publique pour le moment" body="Ce championnat restera privé jusqu’à son activation." action={<Link to="/gestion"><Button>Continuer la préparation</Button></Link>} /></div>;
+  }
+  return <Outlet />;
 }
 
 function NotFoundPage() {
@@ -26,31 +40,35 @@ function NotFoundPage() {
 function RouteContent() {
   return <Routes>
     <Route element={<AppShell />}>
-      <Route index element={<HomePage />} />
-      <Route path="matchs" element={<MatchesPage />} />
-      <Route path="matchs/:matchId" element={<MatchDetailPage />} />
-      <Route path="classements" element={<StandingsPage />} />
-      <Route path="classements/buteurs" element={<StandingsPage type="goals" />} />
-      <Route path="classements/passeurs" element={<StandingsPage type="assists" />} />
-      <Route path="classements/cartons" element={<StandingsPage type="cards" />} />
-      <Route path="statistiques" element={<StatisticsPage />} />
-      <Route path="communaute" element={<CommunityPage />} />
-      <Route path="communaute/:discussionId" element={<DiscussionPage />} />
-      <Route path="communiques" element={<AnnouncementsPage />} />
+      <Route element={<PublicCompetitionRoute />}>
+        <Route index element={<HomePage />} />
+        <Route path="matchs" element={<MatchesPage />} />
+        <Route path="matchs/:matchId" element={<MatchDetailPage />} />
+        <Route path="classements" element={<StandingsPage />} />
+        <Route path="classements/buteurs" element={<StandingsPage type="goals" />} />
+        <Route path="classements/passeurs" element={<StandingsPage type="assists" />} />
+        <Route path="classements/cartons" element={<StandingsPage type="cards" />} />
+        <Route path="statistiques" element={<StatisticsPage />} />
+        <Route path="communaute" element={<CommunityPage />} />
+        <Route path="communaute/:discussionId" element={<DiscussionPage />} />
+        <Route path="communiques" element={<AnnouncementsPage />} />
+      </Route>
       <Route path="notifications" element={<NotificationsPage />} />
       <Route path="profil" element={<ProfilePage />} />
       <Route path="parametres" element={<PreferencesPage />} />
       <Route path="connexion" element={<AuthenticationPage />} />
       <Route path="inscription" element={<AuthenticationPage register />} />
-      <Route path="gestion" element={<PermissionRoute permission="competition:manage"><ManagementHomePage /></PermissionRoute>} />
+      <Route path="gestion/nouveau" element={<HomePage createOnly />} />
+      <Route path="gestion" element={<PermissionRoute permission="competition:manage" draftAllowed><ManagementHomePage /></PermissionRoute>} />
+      <Route path="gestion/membres" element={<PermissionRoute permission="competition:manage" draftAllowed><RolesManagementPage /></PermissionRoute>} />
       <Route path="gestion/matchs" element={<PermissionRoute permission="match:manage:assigned"><ManagerMatchesPage /></PermissionRoute>} />
       <Route path="gestion/matchs/:id/live" element={<PermissionRoute permission="match:manage:assigned"><LiveConsolePage /></PermissionRoute>} />
-      <Route path="gestion/equipes" element={<PermissionRoute permission="competition:manage"><TeamsManagementPage /></PermissionRoute>} />
-      <Route path="gestion/calendrier" element={<PermissionRoute permission="competition:manage"><ScheduleManagementPage /></PermissionRoute>} />
+      <Route path="gestion/equipes" element={<PermissionRoute permission="competition:manage" draftAllowed><TeamsManagementPage /></PermissionRoute>} />
+      <Route path="gestion/calendrier" element={<PermissionRoute permission="competition:manage" draftAllowed><ScheduleManagementPage /></PermissionRoute>} />
       <Route path="gestion/annonces" element={<PermissionRoute permission="competition:manage"><AnnouncementManagementPage /></PermissionRoute>} />
       <Route path="gestion/forum" element={<PermissionRoute permission="forum:moderate"><ModerationPage /></PermissionRoute>} />
       <Route path="gestion/partage" element={<PermissionRoute permission="competition:share"><SharingPage /></PermissionRoute>} />
-      <Route path="gestion/parametres" element={<PermissionRoute permission="competition:manage"><SettingsPage /></PermissionRoute>} />
+      <Route path="gestion/parametres" element={<PermissionRoute permission="competition:manage" draftAllowed><SettingsPage /></PermissionRoute>} />
       <Route path="gestion/systeme" element={<PermissionRoute permission="system:admin:manage"><SystemAdminPage /></PermissionRoute>} />
       <Route path="*" element={<NotFoundPage />} />
     </Route>

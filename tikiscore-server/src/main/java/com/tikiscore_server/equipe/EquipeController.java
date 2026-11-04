@@ -31,6 +31,12 @@ public class EquipeController {
         return equipeService.getPublicTeams();
     }
 
+    @GetMapping("/admin/teams")
+    @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
+    public List<TeamResponse> getAdminTeams() {
+        return equipeService.getAdminTeams();
+    }
+
     @GetMapping("/public/teams/{teamId}")
     public TeamResponse getTeam(@PathVariable UUID teamId) {
         return equipeService.getPublicTeam(teamId);

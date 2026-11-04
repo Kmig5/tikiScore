@@ -2,7 +2,10 @@ package com.tikiscore_server.notification;
 
 import com.tikiscore_server.announcement.Announcement;
 import com.tikiscore_server.championat.ChampionatRepository;
+import com.tikiscore_server.championat.ChampionatService;
 import com.tikiscore_server.forum.Discussion;
+import com.tikiscore_server.membership.ChampionshipMembership;
+import com.tikiscore_server.membership.ChampionshipMembershipRepository;
 import com.tikiscore_server.match.Match;
 import com.tikiscore_server.match.MatchEvent;
 import com.tikiscore_server.match.MatchEventType;
@@ -28,44 +31,53 @@ public class NotificationService {
     private final NotificationPreferencesRepository preferencesRepository;
     private final UserRepository userRepository;
     private final ChampionatRepository championatRepository;
+    private final ChampionatService championatService;
+    private final ChampionshipMembershipRepository membershipRepository;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             NotificationPreferencesRepository preferencesRepository,
             UserRepository userRepository,
-            ChampionatRepository championatRepository
+            ChampionatRepository championatRepository,
+            ChampionatService championatService,
+            ChampionshipMembershipRepository membershipRepository
     ) {
         this.notificationRepository = notificationRepository;
         this.preferencesRepository = preferencesRepository;
         this.userRepository = userRepository;
         this.championatRepository = championatRepository;
+        this.championatService = championatService;
+        this.membershipRepository = membershipRepository;
     }
 
     @Transactional(readOnly = true)
     public NotificationPageResponse getNotifications(UUID userId, int page, int size) {
-        Page<Notification> notifications = notificationRepository.findAllByUser_IdOrderByCreatedAtDesc(
-                userId, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
+        UUID championshipId = championatService.getConfiguredChampionatId();
+        Page<Notification> notifications = notificationRepository.findAllByUser_IdAndChampionship_IdOrderByCreatedAtDesc(
+            userId, championshipId, PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
         return new NotificationPageResponse(notifications.getContent().stream()
                 .map(NotificationResponse::from).toList(), notifications.getNumber(), notifications.getSize(),
                 notifications.getTotalElements(), notifications.getTotalPages(),
-                notificationRepository.countByUser_IdAndReadAtIsNull(userId));
+                notificationRepository.countByUser_IdAndChampionship_IdAndReadAtIsNull(userId, championshipId));
     }
 
     @Transactional(readOnly = true)
     public long getUnreadCount(UUID userId) {
-        return notificationRepository.countByUser_IdAndReadAtIsNull(userId);
+        return notificationRepository.countByUser_IdAndChampionship_IdAndReadAtIsNull(
+            userId, championatService.getConfiguredChampionatId());
     }
 
     @Transactional
     public void markRead(UUID userId, UUID notificationId) {
-        Notification notification = notificationRepository.findByIdAndUser_Id(notificationId, userId)
+        Notification notification = notificationRepository.findByIdAndUser_IdAndChampionship_Id(
+                notificationId, userId, championatService.getConfiguredChampionatId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification introuvable."));
         if (notification.getReadAt() == null) notification.setReadAt(Instant.now());
     }
 
     @Transactional
     public void markAllRead(UUID userId) {
-        notificationRepository.markAllRead(userId, Instant.now());
+        notificationRepository.markAllRead(userId, championatService.getConfiguredChampionatId(), Instant.now());
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +102,7 @@ public class NotificationService {
     public void publishAnnouncement(Announcement announcement) {
         var championship = championatRepository.findById(announcement.getChampionship().getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Championnat introuvable."));
-        List<Notification> notifications = userRepository.findAll().stream()
+        List<Notification> notifications = recipients(championship.getId()).stream()
                 .filter(user -> preferencesRepository.findByUser_Id(user.getId())
                         .map(NotificationPreferences::isAnnouncements).orElse(true))
                 .map(user -> notification(user, championship, announcement))
@@ -138,7 +150,7 @@ public class NotificationService {
         boolean startEnd = type != NotificationType.GOAL;
         String title = type == NotificationType.GOAL ? "But en direct" : type == NotificationType.MATCH_STARTED
                 ? "Le match commence" : "Match terminé";
-        List<Notification> notifications = userRepository.findAll().stream()
+        List<Notification> notifications = recipients(match.getChampionship().getId()).stream()
                 .filter(user -> preferencesRepository.findByUser_Id(user.getId())
                         .map(preferences -> startEnd ? preferences.isMatchStartEnd() : preferences.isGoals())
                         .orElse(startEnd))
@@ -162,7 +174,7 @@ public class NotificationService {
             default -> "Programme modifié";
         };
         String message = match.getHomeTeam().getName() + " - " + match.getAwayTeam().getName();
-        List<Notification> notifications = userRepository.findAll().stream()
+        List<Notification> notifications = recipients(match.getChampionship().getId()).stream()
                 .filter(user -> preferencesRepository.findByUser_Id(user.getId())
                         .map(NotificationPreferences::isScheduleChanges).orElse(true))
                 .map(user -> {
@@ -187,6 +199,12 @@ public class NotificationService {
         notification.setTitle(announcement.getTitle());
         notification.setMessage(announcement.getExcerpt());
         return notification;
+    }
+
+    private List<User> recipients(UUID championshipId) {
+        return membershipRepository.findAllByChampionship_Id(championshipId).stream()
+                .map(ChampionshipMembership::getUser)
+                .toList();
     }
 
     private NotificationPreferences defaults(UUID userId) {

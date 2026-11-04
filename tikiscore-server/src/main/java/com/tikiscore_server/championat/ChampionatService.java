@@ -4,6 +4,10 @@ import com.tikiscore_server.championat.dto.ChampionatResponse;
 import com.tikiscore_server.championat.dto.CreateChampionatRequest;
 import com.tikiscore_server.championat.dto.UpdateChampionatRequest;
 import com.tikiscore_server.championat.enums.ChampionatStatus;
+import com.tikiscore_server.membership.ChampionshipMembership;
+import com.tikiscore_server.membership.ChampionshipMembershipRepository;
+import com.tikiscore_server.equipe.EquipeRepository;
+import com.tikiscore_server.match.MatchRepository;
 import com.tikiscore_server.role.Role;
 import com.tikiscore_server.role.RoleName;
 import com.tikiscore_server.role.RoleRepository;
@@ -17,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -32,17 +38,26 @@ public class ChampionatService {
     private final ChampionatRepository championatRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ChampionshipMembershipRepository membershipRepository;
+    private final EquipeRepository equipeRepository;
+    private final MatchRepository matchRepository;
     private final String publicUrl;
 
     public ChampionatService(
             ChampionatRepository championatRepository,
             UserRepository userRepository,
             RoleRepository roleRepository,
+            ChampionshipMembershipRepository membershipRepository,
+            EquipeRepository equipeRepository,
+            MatchRepository matchRepository,
             @Value("${TIKISCORE_PUBLIC_URL:/}") String publicUrl
     ) {
         this.championatRepository = championatRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.membershipRepository = membershipRepository;
+        this.equipeRepository = equipeRepository;
+        this.matchRepository = matchRepository;
         this.publicUrl = publicUrl;
     }
 
@@ -50,11 +65,26 @@ public class ChampionatService {
         return ChampionatResponse.from(requirePublicChampionat(), publicUrl);
     }
 
+    public List<ChampionatResponse> getPublicChampionnats() {
+        return championatRepository.findAllByStatusInOrderByStartDateAsc(PUBLIC_STATUSES).stream()
+                .map(championat -> ChampionatResponse.from(championat, publicUrl))
+                .toList();
+    }
+
     public UUID getPublicChampionatId() {
         return requirePublicChampionat().getId();
     }
 
     private Championat requirePublicChampionat() {
+        UUID requestedId = requestedChampionshipId();
+        if (requestedId != null) {
+            Championat requested = championatRepository.findById(requestedId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Championnat introuvable."));
+            if (!PUBLIC_STATUSES.contains(requested.getStatus())) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ce championnat n'est pas public.");
+            }
+            return requested;
+        }
         List<Championat> publicChampionnats = championatRepository
                 .findAllByStatusInOrderByStartDateAsc(PUBLIC_STATUSES);
         if (publicChampionnats.isEmpty()) {
@@ -67,11 +97,11 @@ public class ChampionatService {
     }
 
     public ChampionatResponse getAdminChampionat() {
-        return ChampionatResponse.from(requireSingleChampionat(championatRepository.findAll()), publicUrl);
+        return ChampionatResponse.from(requireConfiguredChampionat(), publicUrl);
     }
 
     public UUID getConfiguredChampionatId() {
-        return requireSingleChampionat(championatRepository.findAll()).getId();
+        return requireConfiguredChampionat().getId();
     }
 
     @Transactional
@@ -84,9 +114,6 @@ public class ChampionatService {
         String timeZone = validateTimeZone(request.timeZone());
         if (championatRepository.existsBySlugIgnoreCase(request.slug())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce slug de championnat est déjà utilisé.");
-        }
-        if (!championatRepository.findAll().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Un championnat est déjà configuré pour cette V1.");
         }
         User organizer = userRepository.findById(organizerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
@@ -108,15 +135,19 @@ public class ChampionatService {
         championat.setOrganisateur(organizer);
         Role competitionAdminRole = roleRepository.findByName(RoleName.COMPETITION_ADMIN)
             .orElseThrow(() -> new IllegalStateException("Required COMPETITION_ADMIN role is missing."));
-        organizer.getRoles().add(competitionAdminRole);
+        Role userRole = roleRepository.findByName(RoleName.USER)
+            .orElseThrow(() -> new IllegalStateException("Required USER role is missing."));
         Championat savedChampionat = championatRepository.save(championat);
-        userRepository.save(organizer);
+        ChampionshipMembership membership = new ChampionshipMembership(organizer, championat);
+        membership.getRoles().add(userRole);
+        membership.getRoles().add(competitionAdminRole);
+        membershipRepository.save(membership);
         return ChampionatResponse.from(savedChampionat, publicUrl);
     }
 
     @Transactional
     public ChampionatResponse updateChampionat(UpdateChampionatRequest request) {
-        Championat championat = requireSingleChampionat(championatRepository.findAll());
+        Championat championat = requireConfiguredChampionat();
         String slug = request.slug() == null ? championat.getSlug() : request.slug();
         if (!slug.equalsIgnoreCase(championat.getSlug()) && championatRepository.existsBySlugIgnoreCase(slug)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce slug de championnat est déjà utilisé.");
@@ -150,12 +181,41 @@ public class ChampionatService {
 
     @Transactional
     public ChampionatResponse publishChampionat() {
-        Championat championat = requireSingleChampionat(championatRepository.findAll());
+        Championat championat = requireConfiguredChampionat();
         if (championat.getStatus() != ChampionatStatus.BROUILLON) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Seul un brouillon peut être publié.");
         }
-        championat.setStatus(ChampionatStatus.INSCRIPTION_OUVERTE);
+        UUID championshipId = championat.getId();
+        if (equipeRepository.findAllByChampionship_IdAndActiveTrue(championshipId).size() < 2) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
+                    "Ajoutez au moins deux équipes avant l’activation.");
+        }
+        if (matchRepository.findAllByChampionship_IdOrderByStartsAtAsc(championshipId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
+                    "Programmez au moins une rencontre avant l’activation.");
+        }
+        championat.setStatus(ChampionatStatus.EN_COURS);
         return ChampionatResponse.from(championatRepository.save(championat), publicUrl);
+    }
+
+    private Championat requireConfiguredChampionat() {
+        UUID requestedId = requestedChampionshipId();
+        if (requestedId != null) {
+            return championatRepository.findById(requestedId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Championnat introuvable."));
+        }
+        return requireSingleChampionat(championatRepository.findAll());
+    }
+
+    private UUID requestedChampionshipId() {
+        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes)) return null;
+        String header = attributes.getRequest().getHeader("X-Championship-Id");
+        if (header == null || header.isBlank()) return null;
+        try {
+            return UUID.fromString(header);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Identifiant de championnat invalide.");
+        }
     }
 
     private Championat requireSingleChampionat(List<Championat> championnats) {

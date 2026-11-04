@@ -8,6 +8,7 @@ export interface NavigationItem {
   icon: LucideIcon;
   primary?: boolean;
   permission?: Permission;
+  availableInDraft?: boolean;
   group: "competition" | "personal" | "management";
 }
 
@@ -20,16 +21,18 @@ export const navigationItems: NavigationItem[] = [
   { label: "Notifications", to: "/notifications", icon: Bell, group: "personal" },
   { label: "Profil", to: "/profil", icon: UserRound, primary: true, group: "personal" },
   { label: "Gestion des matchs", to: "/gestion/matchs", icon: Whistle, permission: "match:manage:assigned", group: "management" },
-  { label: "Administration", to: "/gestion", icon: ShieldCheck, permission: "competition:manage", group: "management" },
+  { label: "Administration", to: "/gestion", icon: ShieldCheck, permission: "competition:manage", group: "management", availableInDraft: true },
+  { label: "Membres et rôles", to: "/gestion/membres", icon: UsersRound, permission: "competition:manage", group: "management", availableInDraft: true },
   { label: "Administration système", to: "/gestion/systeme", icon: ShieldCheck, permission: "system:admin:manage", group: "management" },
-  { label: "Équipes et joueurs", to: "/gestion/equipes", icon: UsersRound, permission: "competition:manage", group: "management" },
-  { label: "Calendrier", to: "/gestion/calendrier", icon: CalendarDays, permission: "competition:manage", group: "management" },
+  { label: "Équipes et joueurs", to: "/gestion/equipes", icon: UsersRound, permission: "competition:manage", group: "management", availableInDraft: true },
+  { label: "Calendrier", to: "/gestion/calendrier", icon: CalendarDays, permission: "competition:manage", group: "management", availableInDraft: true },
   { label: "Annonces", to: "/gestion/annonces", icon: FileText, permission: "competition:manage", group: "management" },
   { label: "Modération", to: "/gestion/forum", icon: MessageCircle, permission: "forum:moderate", group: "management" },
   { label: "Partage", to: "/gestion/partage", icon: Share2, permission: "competition:share", group: "management" },
-  { label: "Paramètres", to: "/gestion/parametres", icon: Settings2, permission: "competition:manage", group: "management" },
+  { label: "Paramètres", to: "/gestion/parametres", icon: Settings2, permission: "competition:manage", group: "management", availableInDraft: true },
 ];
 
-export function getVisibleNavigation(permissions: Permission[]): NavigationItem[] {
-  return navigationItems.filter((item) => !item.permission || permissions.includes(item.permission));
+export function getVisibleNavigation(permissions: Permission[], isDraft = false): NavigationItem[] {
+  return navigationItems.filter((item) => (!item.permission || permissions.includes(item.permission))
+    && (!isDraft || item.group === "personal" || item.availableInDraft));
 }

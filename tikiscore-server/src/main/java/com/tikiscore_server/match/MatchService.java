@@ -6,6 +6,7 @@ import com.tikiscore_server.audit.AuditService;
 import com.tikiscore_server.championat.Championat;
 import com.tikiscore_server.championat.ChampionatRepository;
 import com.tikiscore_server.championat.ChampionatService;
+import com.tikiscore_server.championat.enums.ChampionatStatus;
 import com.tikiscore_server.equipe.Equipe;
 import com.tikiscore_server.equipe.EquipeRepository;
 import com.tikiscore_server.group.CompetitionGroup;
@@ -22,6 +23,7 @@ import com.tikiscore_server.notification.NotificationType;
 import com.tikiscore_server.role.RoleName;
 import com.tikiscore_server.user.User;
 import com.tikiscore_server.user.UserRepository;
+import com.tikiscore_server.membership.ChampionshipMembershipRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -52,6 +54,7 @@ public class MatchService {
     private final ApplicationEventPublisher eventPublisher;
     private final AuditService auditService;
     private final NotificationService notificationService;
+    private final ChampionshipMembershipRepository membershipRepository;
 
     public MatchService(
             MatchRepository matchRepository,
@@ -64,7 +67,8 @@ public class MatchService {
             UserRepository userRepository,
             ApplicationEventPublisher eventPublisher,
             AuditService auditService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            ChampionshipMembershipRepository membershipRepository
     ) {
         this.matchRepository = matchRepository;
         this.eventRepository = eventRepository;
@@ -77,11 +81,18 @@ public class MatchService {
         this.eventPublisher = eventPublisher;
         this.auditService = auditService;
         this.notificationService = notificationService;
+        this.membershipRepository = membershipRepository;
     }
 
     @Transactional(readOnly = true)
     public List<MatchResponse> getPublicMatches() {
         return matchRepository.findAllByChampionship_IdOrderByStartsAtAsc(championatService.getPublicChampionatId())
+                .stream().map(MatchResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> getAdminMatches() {
+        return matchRepository.findAllByChampionship_IdOrderByStartsAtAsc(championatService.getConfiguredChampionatId())
                 .stream().map(MatchResponse::from).toList();
     }
 
@@ -172,9 +183,13 @@ public class MatchService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Un gestionnaire apparaît plusieurs fois.");
         }
         List<User> managers = userRepository.findAllById(managerIds);
-        if (managers.size() != managerIds.size()
-                || managers.stream().anyMatch(user -> user.getRoles().stream()
-                .noneMatch(role -> role.getName() == RoleName.MATCH_MANAGER))) {
+        UUID championshipId = match.getChampionship().getId();
+        boolean hasInvalidManager = managers.stream().anyMatch(user -> membershipRepository
+            .findByUser_IdAndChampionship_Id(user.getId(), championshipId)
+            .map(membership -> membership.getRoles().stream()
+                .noneMatch(role -> role.getName() == RoleName.MATCH_MANAGER))
+            .orElse(true));
+        if (managers.size() != managerIds.size() || hasInvalidManager) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT,
                     "Chaque utilisateur affecté doit posséder le rôle gestionnaire de match.");
         }
@@ -471,6 +486,9 @@ public class MatchService {
         Match match = requireMatchForUpdate(matchId, championatService.getConfiguredChampionatId());
         if (match.getAssignedManagers().stream().noneMatch(manager -> manager.getId().equals(managerId))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Le gestionnaire n'est pas affecté à ce match.");
+        }
+        if (requireChampionship(match.getChampionship().getId()).getStatus() != ChampionatStatus.EN_COURS) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Le championnat doit être actif pour gérer un match.");
         }
         return match;
     }

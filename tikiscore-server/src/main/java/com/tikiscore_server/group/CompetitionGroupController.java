@@ -33,6 +33,12 @@ public class CompetitionGroupController {
         return groupService.getPublicGroups();
     }
 
+    @GetMapping("/admin/groups")
+    @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
+    public List<GroupResponse> getAdminGroups() {
+        return groupService.getAdminGroups();
+    }
+
     @PostMapping("/admin/groups")
     @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
     public ResponseEntity<GroupResponse> createGroup(@Valid @RequestBody GroupRequest request) {

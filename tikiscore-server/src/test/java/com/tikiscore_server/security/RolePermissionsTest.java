@@ -50,4 +50,13 @@ class RolePermissionsTest {
         assertTrue(RolePermissions.permissionsFor(Set.of(RoleName.TEAM_MANAGER))
                 .equals(RolePermissions.permissionsFor(Set.of(RoleName.USER))));
     }
+
+    @Test
+    void systemAdministratorDoesNotReceiveChampionshipPermissions() {
+        Set<Permission> permissions = RolePermissions.permissionsFor(Set.of(RoleName.SYSTEM_ADMIN));
+
+        assertTrue(permissions.contains(Permission.SYSTEM_ADMIN_MANAGE));
+        assertFalse(permissions.contains(Permission.COMPETITION_MANAGE));
+        assertFalse(permissions.contains(Permission.FORUM_MODERATE));
+    }
 }

@@ -43,6 +43,13 @@ public class EquipeService {
     }
 
     @Transactional(readOnly = true)
+    public List<TeamResponse> getAdminTeams() {
+        UUID championshipId = championatService.getConfiguredChampionatId();
+        return equipeRepository.findAllByChampionship_IdAndActiveTrue(championshipId).stream()
+                .map(TeamResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
     public TeamResponse getPublicTeam(UUID teamId) {
         UUID championshipId = championatService.getPublicChampionatId();
         Equipe team = equipeRepository.findByIdAndChampionship_IdAndActiveTrue(teamId, championshipId)

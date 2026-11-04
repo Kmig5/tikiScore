@@ -45,6 +45,12 @@ public class CompetitionGroupService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<GroupResponse> getAdminGroups() {
+        return groupRepository.findAllByChampionship_IdOrderByNameAsc(championatService.getConfiguredChampionatId())
+                .stream().map(GroupResponse::from).toList();
+    }
+
     @Transactional
     public GroupResponse createGroup(GroupRequest request) {
         UUID championshipId = championatService.getConfiguredChampionatId();

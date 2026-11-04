@@ -11,14 +11,19 @@ import org.springframework.data.repository.query.Param;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
 
-    Page<Notification> findAllByUser_IdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+    Page<Notification> findAllByUser_IdAndChampionship_IdOrderByCreatedAtDesc(UUID userId, UUID championshipId, Pageable pageable);
 
-    long countByUser_IdAndReadAtIsNull(UUID userId);
+    long countByUser_IdAndChampionship_IdAndReadAtIsNull(UUID userId, UUID championshipId);
 
-    Optional<Notification> findByIdAndUser_Id(UUID id, UUID userId);
+    Optional<Notification> findByIdAndUser_IdAndChampionship_Id(UUID id, UUID userId, UUID championshipId);
 
     @Modifying
     @Query("update Notification notification set notification.readAt = :readAt "
-            + "where notification.user.id = :userId and notification.readAt is null")
-    int markAllRead(@Param("userId") UUID userId, @Param("readAt") java.time.Instant readAt);
+            + "where notification.user.id = :userId and notification.championship.id = :championshipId "
+            + "and notification.readAt is null")
+        int markAllRead(
+            @Param("userId") UUID userId,
+            @Param("championshipId") UUID championshipId,
+            @Param("readAt") java.time.Instant readAt
+        );
 }

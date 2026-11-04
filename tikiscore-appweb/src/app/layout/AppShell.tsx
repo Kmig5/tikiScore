@@ -5,15 +5,19 @@ import { getVisibleNavigation } from "../navigation";
 import { hasPermission } from "../../domain/permissions";
 import { useTikiScoreData, useTikiScoreStatus } from "../hooks";
 import { tikiScoreService } from "../../services/tikiScoreService";
+import { getActiveChampionshipId } from "../../services/api";
+import Select from "../../composants/ui/Select";
 import styles from "./AppShell.module.css";
 
 export default function AppShell() {
-  const { user, permissions, signOut } = useDemoAccess();
+  const { user, publicChampionships, permissions, signOut, switchChampionship, isSwitchingChampionship } = useDemoAccess();
   const data = useTikiScoreData();
   const dataStatus = useTikiScoreStatus();
   const location = useLocation();
   const navigate = useNavigate();
-  const visibleNavigation = getVisibleNavigation(permissions);
+  const championshipOptions = [...new Map([...(user?.championships ?? []), ...publicChampionships].map((championship) => [championship.id, championship])).values()];
+  const isDraft = user?.championships.some((championship) => championship.id === getActiveChampionshipId() && championship.status === "BROUILLON") ?? false;
+  const visibleNavigation = getVisibleNavigation(permissions, isDraft);
   const mobileNavigation = visibleNavigation.filter((item) => item.primary);
   const unreadCount = data.notifications.filter((notification) => !notification.read).length;
   const isManagement = location.pathname.startsWith("/gestion");
@@ -27,6 +31,7 @@ export default function AppShell() {
         </NavLink>
         <div className={styles.headerRight}>
           <span className={styles.connectionFlag}><span />API</span>
+          {championshipOptions.length > 1 && <Select label="Championnat actif" fullWidth={false} options={championshipOptions.map((championship) => ({ value: championship.id, label: championship.name }))} value={getActiveChampionshipId() ?? ""} onChange={(event) => { void switchChampionship(event.target.value).then(() => navigate("/")).catch((error: unknown) => console.error("Échec du changement de championnat.", error)); }} />}
           {user ? <><span className={styles.userName}>{user.displayName}</span><button className={styles.signOutButton} type="button" onClick={() => { void signOut().catch((error: unknown) => console.error("Échec de la déconnexion.", error)); }}>Déconnexion</button></> : <Link className={styles.signInLink} to="/connexion">Connexion</Link>}
           <NavLink className={styles.headerIcon} to="/notifications" aria-label={`Notifications, ${unreadCount} non lues`}>
             <Bell size={20} aria-hidden="true" />
@@ -74,7 +79,7 @@ export default function AppShell() {
           {dataStatus.state !== "ready" && <div className={`${styles.apiNotice} ${dataStatus.state === "error" ? styles.apiError : ""}`} role={dataStatus.state === "error" ? "alert" : "status"}>
             <span>{dataStatus.message}</span>{dataStatus.state === "error" && <button type="button" onClick={() => { void tikiScoreService.refresh(); }}>Réessayer</button>}
           </div>}
-          <Outlet />
+          {isSwitchingChampionship ? <div className={styles.apiNotice} role="status">Chargement du championnat…</div> : <Outlet />}
         </main>
       </div>
 

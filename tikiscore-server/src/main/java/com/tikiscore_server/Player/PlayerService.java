@@ -41,6 +41,16 @@ public class PlayerService {
     }
 
     @Transactional(readOnly = true)
+    public List<PlayerResponse> getAdminTeamPlayers(UUID teamId) {
+        UUID championshipId = championatService.getConfiguredChampionatId();
+        if (equipeRepository.findByIdAndChampionship_IdAndActiveTrue(teamId, championshipId).isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe introuvable.");
+        }
+        return playerRepository.findAllByEquipe_IdAndActiveTrue(teamId).stream()
+                .map(PlayerResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
     public PlayerResponse getPublicPlayer(UUID playerId) {
         UUID championshipId = championatService.getPublicChampionatId();
         Player player = playerRepository.findByIdAndEquipe_Championship_IdAndActiveTrue(playerId, championshipId)

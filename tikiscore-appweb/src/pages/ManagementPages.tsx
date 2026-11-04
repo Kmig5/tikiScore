@@ -15,6 +15,7 @@ import type { MatchEventType } from "../domain/types";
 import { tikiScoreService } from "../services/tikiScoreService";
 import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTransport";
 import { tikiScoreApi, type AdminUser } from "../services/api";
+import { getActiveChampionshipId } from "../services/api";
 import { useToast } from "../contexts/useToast";
 import { EmptyState, MatchCard, PageHeader, SectionHeading, TeamMark } from "./shared";
 import styles from "./pages.module.css";
@@ -26,19 +27,39 @@ function PermissionNotice({ permission }: { permission: "competition:manage" | "
 
 export function ManagementHomePage() {
   const data = useTikiScoreData();
-  const { permissions } = useDemoAccess();
+  const { permissions, user, refreshCurrentUser } = useDemoAccess();
+  const { success, error } = useToast();
+  const activeChampionship = user?.championships.find((championship) => championship.id === getActiveChampionshipId());
   if (!hasPermission(permissions, "competition:manage")) return <div className={styles.page}><PageHeader eyebrow="Espace de gestion" title="Administration" /><PermissionNotice permission="competition:manage" /></div>;
-  const entries = [
+  const entries = activeChampionship?.status === "BROUILLON" ? [
+    { to: "/gestion/membres", label: "Membres et rôles", detail: "Définir les accès de ce championnat" },
+    { to: "/gestion/equipes", label: "Poules, équipes et joueurs", detail: `${data.groups.length} poules · ${data.teams.length} équipes` },
+    { to: "/gestion/calendrier", label: "Calendrier", detail: "Programmer les premières rencontres" },
+    { to: "/gestion/parametres", label: "Paramètres", detail: "Vérifier l’identité et les préférences" },
+  ] : [
     { to: "/gestion/matchs", label: "Gestion des matchs", detail: `${data.matches.filter((match) => match.status === "scheduled" || match.status === "live").length} rencontres à suivre` },
     { to: "/gestion/equipes", label: "Équipes et joueurs", detail: `${data.teams.length} équipes · ${data.players.length} joueurs` },
     { to: "/gestion/calendrier", label: "Calendrier", detail: "Programmer une rencontre" },
+    { to: "/gestion/membres", label: "Membres et rôles", detail: "Gérer les accès de ce championnat" },
     { to: "/gestion/annonces", label: "Annonces et communiqués", detail: `${data.announcements.length} publications officielles` },
     { to: "/gestion/forum", label: "Modération du forum", detail: `${data.discussions.length} discussions visibles` },
     { to: "/gestion/partage", label: "Partage public", detail: "Lien, QR code et impression" },
     { to: "/gestion/parametres", label: "Paramètres", detail: "Préférences locales du championnat" },
   ];
+  async function activateChampionship() {
+    try {
+      await tikiScoreApi.publishChampionship();
+      await refreshCurrentUser();
+      await tikiScoreService.refresh();
+      success("Le championnat est maintenant public et actif.");
+    } catch (cause) {
+      error(cause instanceof Error ? cause.message : "L’activation n’a pas abouti.");
+    }
+  }
   return <div className={styles.page}>
     <PageHeader eyebrow="Espace de gestion" title="Administration" description="Gérez les données enregistrées sur le serveur du championnat." />
+    {activeChampionship?.status === "BROUILLON" && <section className={styles.panel}><h2 className={styles.panelTitle}>Préparation du brouillon</h2><p className={styles.contentText}>Ajoutez les équipes, les poules et le calendrier. L’activation rendra ce championnat public.</p><Button onClick={() => void activateChampionship()}>Activer et publier</Button></section>}
+    <div className={styles.discussionActions}><Link to="/gestion/nouveau"><Button variant="secondary"><FilePlus2 size={15} aria-hidden="true" />Créer un championnat</Button></Link></div>
     <div className={styles.list}>{entries.map((entry) => <Link className={styles.discussion} key={entry.to} to={entry.to}><h3>{entry.label}</h3><p>{entry.detail}</p></Link>)}</div>
   </div>;
 }
@@ -68,6 +89,70 @@ export function ManagerMatchesPage() {
   return <div className={styles.page}>
     <PageHeader eyebrow="Espace gestionnaire" title="Rencontres attribuées" description="Les actions sont enregistrées et autorisées par le serveur." />
     {matches.length ? <div className={styles.matchGrid}>{matches.map((match) => <div key={match.id} className={styles.managerMatch}><MatchCard match={match} />{isAdministrator && <Select label="Gestionnaire attribué" options={[{ value: "", label: "Choisir un gestionnaire" }, ...users.filter((candidate) => candidate.roles.includes("MATCH_MANAGER")).map((candidate) => ({ value: candidate.id, label: candidate.displayName }))]} value="" onChange={(event) => void assign(match.id, event.target.value)} />}<Link to={`/gestion/matchs/${match.id}/live`}><Button fullWidth><Whistle size={15} aria-hidden="true" />Ouvrir la console</Button></Link></div>)}</div> : <EmptyState title="Aucun match attribué" body="Aucune rencontre n’est affectée à votre compte." />}
+  </div>;
+}
+
+export function RolesManagementPage() {
+  const { user, refreshCurrentUser } = useDemoAccess();
+  const { error, success } = useToast();
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void tikiScoreApi.getAdminUsers().then((items) => {
+      if (!active) return;
+      setUsers(items);
+      const currentSelection = items.find((item) => item.id === selectedUserId) ?? items[0];
+      if (currentSelection) {
+        setSelectedUserId(currentSelection.id);
+        setRoles(currentSelection.roles.filter((role) => role !== "SYSTEM_ADMIN"));
+      }
+    }).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de charger les membres."));
+    return () => { active = false; };
+  }, [error]);
+
+  const selectedUser = users.find((candidate) => candidate.id === selectedUserId);
+
+  function chooseUser(userId: string) {
+    setSelectedUserId(userId);
+    setRoles(users.find((candidate) => candidate.id === userId)?.roles.filter((role) => role !== "SYSTEM_ADMIN") ?? []);
+  }
+
+  function toggleRole(role: string) {
+    setRoles((current) => current.includes(role) ? current.filter((value) => value !== role) : [...current, role]);
+  }
+
+  async function saveRoles() {
+    if (!selectedUser) return;
+    setIsSaving(true);
+    try {
+      await tikiScoreApi.assignChampionshipRoles(selectedUser.id, roles);
+      const updatedUsers = await tikiScoreApi.getAdminUsers();
+      setUsers(updatedUsers);
+      setRoles(updatedUsers.find((candidate) => candidate.id === selectedUser.id)?.roles.filter((role) => role !== "SYSTEM_ADMIN") ?? []);
+      if (selectedUser.id === user?.id) await refreshCurrentUser();
+      await tikiScoreService.refresh();
+      success("Les rôles du championnat ont été mis à jour.");
+    } catch (cause) {
+      error(cause instanceof Error ? cause.message : "Impossible d’enregistrer les rôles.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return <div className={styles.page}>
+    <PageHeader eyebrow="Administration" title="Membres et rôles" description="Les rôles attribués ici s’appliquent uniquement au championnat actif." />
+    <section className={`${styles.panel} ${styles.formStack}`}>
+      <Select label="Compte" options={users.map((candidate) => ({ value: candidate.id, label: `${candidate.displayName} · ${candidate.username}` }))} value={selectedUserId} onChange={(event) => chooseUser(event.target.value)} />
+      {selectedUser ? <fieldset className={styles.formStack}>
+        <legend className={styles.panelTitle}>Rôles du championnat</legend>
+        {[{ id: "USER", label: "Membre" }, { id: "COMPETITION_ADMIN", label: "Administrateur du championnat" }, { id: "MATCH_MANAGER", label: "Gestionnaire de match" }, { id: "TEAM_MANAGER", label: "Gestionnaire d’équipe" }, { id: "FORUM_MODERATOR", label: "Modérateur du forum" }].map((role) => <label className={styles.fieldLabel} key={role.id}><span><input type="checkbox" checked={roles.includes(role.id)} onChange={() => toggleRole(role.id)} /> {role.label}</span></label>)}
+        <Button onClick={() => void saveRoles()} isLoading={isSaving} loadingText="Enregistrement…">Enregistrer les rôles</Button>
+      </fieldset> : <EmptyState title="Aucun compte disponible" body="Les personnes doivent d’abord créer un compte pour recevoir un rôle." />}
+    </section>
   </div>;
 }
 
@@ -176,11 +261,26 @@ export function TeamsManagementPage() {
   const { permissions } = useDemoAccess();
   const { success, error } = useToast();
   const [name, setName] = useState("");
+  const [groupName, setGroupName] = useState("");
   const [groupId, setGroupId] = useState(data.groups[0]?.id ?? "");
   const [playerName, setPlayerName] = useState("");
   const [playerTeamId, setPlayerTeamId] = useState(data.teams[0]?.id ?? "");
   const [playerNumber, setPlayerNumber] = useState("1");
   if (!hasPermission(permissions, "competition:manage")) return <div className={styles.page}><PageHeader title="Équipes et joueurs" /><PermissionNotice permission="competition:manage" /></div>;
+
+  async function submitGroup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!groupName.trim()) return;
+    try {
+      await tikiScoreApi.createGroup(groupName.trim());
+      await tikiScoreService.refresh();
+      setGroupName("");
+      setGroupId(tikiScoreService.getSnapshot().groups[0]?.id ?? "");
+      success("Poule ajoutée.");
+    } catch (cause) {
+      error(cause instanceof Error ? cause.message : "Impossible d’ajouter la poule.");
+    }
+  }
 
   async function submitTeam(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -207,6 +307,10 @@ export function TeamsManagementPage() {
   }
 
   return <div className={styles.page}><PageHeader eyebrow="Administration" title="Équipes et joueurs" description={`${data.teams.length} équipes enregistrées.`} />
+    <form className={`${styles.panel} ${styles.inlineForm}`} onSubmit={submitGroup}>
+      <label className={styles.fieldLabel}>Nom de la poule<input className={styles.formInput} value={groupName} onChange={(event) => setGroupName(event.target.value)} maxLength={100} required /></label>
+      <Button type="submit" disabled={!groupName.trim()}><FilePlus2 size={15} aria-hidden="true" />Créer une poule</Button>
+    </form>
     <form className={`${styles.panel} ${styles.inlineForm}`} onSubmit={submitTeam}>
       <label className={styles.fieldLabel}>Nom de l’équipe<input className={styles.formInput} value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required /></label>
       <div className={styles.fieldLabel}><span>Poule</span><Select label="Poule" options={data.groups.map((group) => ({ value: group.id, label: group.name }))} value={groupId} onChange={(event) => setGroupId(event.target.value)} /></div>

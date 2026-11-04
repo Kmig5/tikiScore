@@ -37,6 +37,12 @@ public class MatchController {
         return matchService.getPublicMatches();
     }
 
+    @GetMapping("/admin/matches")
+    @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
+    public List<MatchResponse> getAdminMatches() {
+        return matchService.getAdminMatches();
+    }
+
     @GetMapping("/public/matches/today")
     public List<MatchResponse> getMatchesToday() {
         return matchService.getMatchesToday();

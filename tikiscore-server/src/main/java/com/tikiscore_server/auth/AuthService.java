@@ -6,6 +6,8 @@ import com.tikiscore_server.auth.dto.PasswordChangeRequest;
 import com.tikiscore_server.auth.dto.ProfileUpdateRequest;
 import com.tikiscore_server.auth.dto.RegisterRequest;
 import com.tikiscore_server.auth.dto.TokenResponse;
+import com.tikiscore_server.membership.ChampionshipMembership;
+import com.tikiscore_server.membership.ChampionshipMembershipRepository;
 import com.tikiscore_server.role.Role;
 import com.tikiscore_server.role.RoleName;
 import com.tikiscore_server.role.RoleRepository;
@@ -17,6 +19,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,6 +41,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final SessionTokenRepository sessionTokenRepository;
+    private final ChampionshipMembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final Duration refreshTokenLifetime;
 
@@ -45,12 +49,14 @@ public class AuthService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             SessionTokenRepository sessionTokenRepository,
+            ChampionshipMembershipRepository membershipRepository,
             PasswordEncoder passwordEncoder,
             @Value("${TIKISCORE_REFRESH_TOKEN_DAYS:14}") long refreshTokenDays
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.sessionTokenRepository = sessionTokenRepository;
+        this.membershipRepository = membershipRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenLifetime = Duration.ofDays(refreshTokenDays);
     }
@@ -152,12 +158,32 @@ public class AuthService {
     }
 
     private AuthenticatedUserResponse authenticatedUser(User user) {
-        Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toUnmodifiableSet());
+        Set<RoleName> roles = user.getRoles().stream().map(Role::getName)
+            .filter(role -> role == RoleName.SYSTEM_ADMIN)
+            .collect(Collectors.toUnmodifiableSet());
         Set<String> permissionNames = RolePermissions.permissionsFor(roles).stream()
             .map(permission -> permission.name().toLowerCase(java.util.Locale.ROOT).replace("_", ":"))
                 .collect(Collectors.toUnmodifiableSet());
         Set<String> roleNames = roles.stream().map(RoleName::name).collect(Collectors.toUnmodifiableSet());
-        return new AuthenticatedUserResponse(user.getId(), user.getUsername(), user.getDisplayName(), roleNames, permissionNames);
+        List<AuthenticatedUserResponse.ChampionshipAccess> championships = membershipRepository.findAllByUser_Id(user.getId()).stream()
+            .map(this::championshipAccess)
+            .toList();
+        return new AuthenticatedUserResponse(user.getId(), user.getUsername(), user.getDisplayName(), roleNames, permissionNames, championships);
+        }
+
+        private AuthenticatedUserResponse.ChampionshipAccess championshipAccess(ChampionshipMembership membership) {
+        Set<RoleName> roles = membership.getRoles().stream().map(Role::getName).collect(Collectors.toUnmodifiableSet());
+        Set<String> roleNames = roles.stream().map(RoleName::name).collect(Collectors.toUnmodifiableSet());
+        Set<String> permissionNames = RolePermissions.permissionsFor(roles).stream()
+            .map(permission -> permission.name().toLowerCase(java.util.Locale.ROOT).replace("_", ":"))
+            .collect(Collectors.toUnmodifiableSet());
+        return new AuthenticatedUserResponse.ChampionshipAccess(
+            membership.getChampionship().getId(),
+            membership.getChampionship().getName(),
+            membership.getChampionship().getSlug(),
+            membership.getChampionship().getStatus().name(),
+            roleNames,
+            permissionNames);
     }
 
     private static String normalizeUsername(String username) {

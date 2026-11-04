@@ -11,11 +11,12 @@ import { tikiScoreService } from "../services/tikiScoreService";
 import type { MatchStatus } from "../domain/types";
 import { hasPermission } from "../domain/permissions";
 import { tikiScoreApi } from "../services/api";
+import { setActiveChampionshipId } from "../services/api";
 import { useToast } from "../contexts/useToast";
 import { PageHeader, SectionHeading, EmptyState, MatchCard, StandingList, LeaderboardList, TeamMark } from "./shared";
 import styles from "./pages.module.css";
 
-export function HomePage() {
+export function HomePage({ createOnly = false }: { createOnly?: boolean }) {
   const data = useTikiScoreData();
   const { user, refreshCurrentUser } = useDemoAccess();
   const navigate = useNavigate();
@@ -38,11 +39,11 @@ export function HomePage() {
     setIsCreating(true);
     setSetupError("");
     try {
-      await tikiScoreApi.createChampionship({ name: name.trim(), slug, edition: edition.trim(), locality: locality.trim(), description: description.trim(), format });
-      await tikiScoreApi.publishChampionship();
+      const created = await tikiScoreApi.createChampionship({ name: name.trim(), slug, edition: edition.trim(), locality: locality.trim(), description: description.trim(), format });
+      setActiveChampionshipId(created.id);
       await refreshCurrentUser();
       await tikiScoreService.refresh();
-      success("Le championnat est créé et publié.");
+      success("Brouillon créé. Configurez-le avant son activation.");
       navigate("/gestion", { replace: true });
     } catch (cause) {
       setSetupError(cause instanceof Error ? cause.message : "La création du championnat n’a pas abouti.");
@@ -51,24 +52,24 @@ export function HomePage() {
     }
   }
 
-  if (!data.championship.id) {
+  if (createOnly || !data.championship.id) {
     return <div className={styles.page}>
       <PageHeader eyebrow="Configuration initiale" title="Votre championnat commence ici" description="Cette instance n’a pas encore de championnat configuré." />
       {user ? <form className={`${styles.panel} ${styles.formStack}`} onSubmit={(event) => void createFirstChampionship(event)}>
-        <h2 className={styles.panelTitle}>Créer le premier championnat</h2>
+        <h2 className={styles.panelTitle}>Créer un championnat en brouillon</h2>
         <label className={styles.fieldLabel}>Nom du championnat<input className={styles.formInput} value={name} onChange={(event) => setName(event.target.value)} maxLength={150} required /></label>
         <label className={styles.fieldLabel}>Édition<input className={styles.formInput} value={edition} onChange={(event) => setEdition(event.target.value)} maxLength={100} /></label>
         <label className={styles.fieldLabel}>Localité<input className={styles.formInput} value={locality} onChange={(event) => setLocality(event.target.value)} maxLength={150} /></label>
         <label className={styles.fieldLabel}>Description<textarea className={`${styles.formInput} ${styles.formTextarea}`} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1000} /></label>
         <Select label="Format" options={[{ value: "LIGUE", label: "Ligue" }, { value: "GROUPES", label: "Groupes" }, { value: "ELIMINATOIRE", label: "Éliminatoire" }, { value: "GROUPES_ET_ELIMINATOIRE", label: "Groupes et éliminatoire" }]} value={format} onChange={(event) => setFormat(event.target.value)} />
         {setupError && <p className={styles.authError} role="alert">{setupError}</p>}
-        <Button type="submit" isLoading={isCreating} loadingText="Création…">Créer et publier</Button>
+        <Button type="submit" isLoading={isCreating} loadingText="Création…">Créer le brouillon</Button>
       </form> : <EmptyState title="Connectez-vous pour commencer" body="Le premier compte connecté qui crée ce championnat en deviendra l’administrateur." action={<Link to="/connexion"><Button>Se connecter</Button></Link>} />}
     </div>;
   }
 
   async function shareChampionship() {
-    const url = `${window.location.origin}/`;
+    const url = new URL(data.championship.publicUrl, window.location.origin).toString();
     if (navigator.share) {
       try {
         await navigator.share({ title: data.championship.name, text: `Suivez ${data.championship.name}`, url });

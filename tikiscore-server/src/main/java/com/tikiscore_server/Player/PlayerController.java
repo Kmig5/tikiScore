@@ -31,6 +31,12 @@ public class PlayerController {
         return playerService.getTeamPlayers(teamId);
     }
 
+    @GetMapping("/admin/teams/{teamId}/players")
+    @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
+    public List<PlayerResponse> getAdminTeamPlayers(@PathVariable UUID teamId) {
+        return playerService.getAdminTeamPlayers(teamId);
+    }
+
     @GetMapping("/public/players/{playerId}")
     public PlayerResponse getPlayer(@PathVariable UUID playerId) {
         return playerService.getPublicPlayer(playerId);

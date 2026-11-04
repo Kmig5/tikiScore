@@ -31,6 +31,11 @@ public class ChampionatController {
         return championatService.getPublicChampionat();
     }
 
+    @GetMapping("/public/competitions")
+    public java.util.List<ChampionatResponse> getPublicChampionnats() {
+        return championatService.getPublicChampionnats();
+    }
+
     @GetMapping("/admin/competition")
     @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
     public ChampionatResponse getAdminChampionat() {

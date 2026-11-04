@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public record ChampionatResponse(
         UUID id,
+        String slug,
         String name,
         String edition,
         String description,
@@ -24,6 +25,7 @@ public record ChampionatResponse(
     public static ChampionatResponse from(Championat championat, String publicUrl) {
         return new ChampionatResponse(
                 championat.getId(),
+                championat.getSlug(),
                 championat.getName(),
                 valueOrEmpty(championat.getEdition()),
                 valueOrEmpty(championat.getDescription()),

@@ -56,7 +56,7 @@ Ne pas recréer un composant sauf demande explicite. Les composants connus inclu
 
 ## Périmètre fonctionnel de la V1
 
-La V1 gère un seul championnat de vacances. Ne pas afficher de sélecteur de championnat ni d'entrée de navigation « Championnats ». Le modèle backend peut néanmoins conserver l'entité `Championnat` et ses relations afin de permettre une évolution future vers plusieurs compétitions.
+L'application gère plusieurs championnats. Le contexte actif est choisi parmi les championnats publics ou ceux auxquels le compte est membre; les pages et mutations restent limitées à ce championnat. Un brouillon est privé jusqu'à son activation.
 
 L'application doit permettre de :
 
@@ -74,7 +74,7 @@ L'application doit permettre de :
 
 ## Rôles et autorisations
 
-Les capacités visibles dépendent des rôles, mais les écrans publics restent communs. Masquer une action dans l'interface ne remplace jamais le contrôle d'autorisation effectué par Spring Boot.
+Les capacités visibles dépendent des rôles attribués dans le championnat actif, mais les écrans publics restent communs. Les rôles métier ne confèrent jamais de droit dans un autre championnat. `SYSTEM_ADMIN` est global et distinct de l'administration d'une compétition. Masquer une action dans l'interface ne remplace jamais le contrôle d'autorisation effectué par Spring Boot.
 
 ### Visiteur
 
@@ -170,7 +170,7 @@ Adapter ces chemins au routeur déjà présent au lieu de créer une seconde con
 
 ## Accueil du championnat
 
-L'accueil représente directement l'unique championnat. Prioriser dans cet ordre :
+L'accueil représente le championnat actif. Prioriser dans cet ordre :
 
 1. match actuellement en direct ;
 2. prochains matchs ;

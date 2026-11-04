@@ -2,6 +2,7 @@ package com.tikiscore_server.security;
 
 import com.tikiscore_server.auth.SessionToken;
 import com.tikiscore_server.auth.SessionTokenRepository;
+import com.tikiscore_server.membership.ChampionshipMembershipRepository;
 import com.tikiscore_server.role.RoleName;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -13,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,9 +27,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ApiTokenFilter extends OncePerRequestFilter {
 
     private final SessionTokenRepository sessionTokenRepository;
+    private final ChampionshipMembershipRepository membershipRepository;
 
-    public ApiTokenFilter(SessionTokenRepository sessionTokenRepository) {
+    public ApiTokenFilter(
+            SessionTokenRepository sessionTokenRepository,
+            ChampionshipMembershipRepository membershipRepository
+    ) {
         this.sessionTokenRepository = sessionTokenRepository;
+        this.membershipRepository = membershipRepository;
     }
 
     @Override
@@ -49,7 +56,20 @@ public class ApiTokenFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request, SessionToken session) {
         Set<RoleName> roles = session.getUser().getRoles().stream()
                 .map(role -> role.getName())
-                .collect(Collectors.toUnmodifiableSet());
+            .filter(role -> role == RoleName.SYSTEM_ADMIN)
+            .collect(Collectors.toCollection(HashSet::new));
+        String championshipId = request.getHeader("X-Championship-Id");
+        if (championshipId != null) {
+            try {
+            membershipRepository.findByUser_IdAndChampionship_Id(
+                    session.getUser().getId(), java.util.UUID.fromString(championshipId))
+                .ifPresent(membership -> membership.getRoles().stream()
+                    .map(role -> role.getName())
+                    .forEach(roles::add));
+            } catch (IllegalArgumentException ignored) {
+            // Invalid or absent championship context grants no local roles.
+            }
+        }
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                 session.getUser().getId(), null, RolePermissions.authoritiesFor(roles));
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

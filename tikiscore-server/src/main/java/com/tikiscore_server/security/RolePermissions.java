@@ -38,7 +38,7 @@ public final class RolePermissions {
     private static Set<Permission> permissionsFor(RoleName role) {
         return switch (role) {
             case USER -> MEMBER;
-            case SYSTEM_ADMIN -> EnumSet.allOf(Permission.class);
+            case SYSTEM_ADMIN -> EnumSet.of(Permission.SYSTEM_ADMIN_MANAGE);
             case MATCH_MANAGER -> EnumSet.of(Permission.CHAMPIONSHIP_READ, Permission.MATCH_MANAGE_ASSIGNED);
             case FORUM_MODERATOR -> EnumSet.of(
                     Permission.CHAMPIONSHIP_READ,
