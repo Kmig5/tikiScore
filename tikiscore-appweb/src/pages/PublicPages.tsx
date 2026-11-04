@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowRight, Radio, Share2 } from "lucide-react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
 import Select from "../composants/ui/Select";
@@ -10,17 +10,62 @@ import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTra
 import { tikiScoreService } from "../services/tikiScoreService";
 import type { MatchStatus } from "../domain/types";
 import { hasPermission } from "../domain/permissions";
+import { tikiScoreApi } from "../services/api";
 import { useToast } from "../contexts/useToast";
 import { PageHeader, SectionHeading, EmptyState, MatchCard, StandingList, LeaderboardList, TeamMark } from "./shared";
 import styles from "./pages.module.css";
 
 export function HomePage() {
   const data = useTikiScoreData();
+  const { user, refreshCurrentUser } = useDemoAccess();
+  const navigate = useNavigate();
   const { success, error } = useToast();
+  const [name, setName] = useState("");
+  const [edition, setEdition] = useState("");
+  const [locality, setLocality] = useState("");
+  const [description, setDescription] = useState("");
+  const [format, setFormat] = useState("GROUPES_ET_ELIMINATOIRE");
+  const [isCreating, setIsCreating] = useState(false);
+  const [setupError, setSetupError] = useState("");
   const liveMatch = data.matches.find((match) => match.status === "live" || match.status === "halftime");
   const upcoming = data.matches.filter((match) => match.status === "scheduled").sort((first, second) => first.startsAt.localeCompare(second.startsAt)).slice(0, 2);
   const priority = data.announcements.find((announcement) => announcement.priority === "important");
   const firstGroup = data.groups[0];
+
+  async function createFirstChampionship(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    setIsCreating(true);
+    setSetupError("");
+    try {
+      await tikiScoreApi.createChampionship({ name: name.trim(), slug, edition: edition.trim(), locality: locality.trim(), description: description.trim(), format });
+      await tikiScoreApi.publishChampionship();
+      await refreshCurrentUser();
+      await tikiScoreService.refresh();
+      success("Le championnat est créé et publié.");
+      navigate("/gestion", { replace: true });
+    } catch (cause) {
+      setSetupError(cause instanceof Error ? cause.message : "La création du championnat n’a pas abouti.");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  if (!data.championship.id) {
+    return <div className={styles.page}>
+      <PageHeader eyebrow="Configuration initiale" title="Votre championnat commence ici" description="Cette instance n’a pas encore de championnat configuré." />
+      {user ? <form className={`${styles.panel} ${styles.formStack}`} onSubmit={(event) => void createFirstChampionship(event)}>
+        <h2 className={styles.panelTitle}>Créer le premier championnat</h2>
+        <label className={styles.fieldLabel}>Nom du championnat<input className={styles.formInput} value={name} onChange={(event) => setName(event.target.value)} maxLength={150} required /></label>
+        <label className={styles.fieldLabel}>Édition<input className={styles.formInput} value={edition} onChange={(event) => setEdition(event.target.value)} maxLength={100} /></label>
+        <label className={styles.fieldLabel}>Localité<input className={styles.formInput} value={locality} onChange={(event) => setLocality(event.target.value)} maxLength={150} /></label>
+        <label className={styles.fieldLabel}>Description<textarea className={`${styles.formInput} ${styles.formTextarea}`} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={1000} /></label>
+        <Select label="Format" options={[{ value: "LIGUE", label: "Ligue" }, { value: "GROUPES", label: "Groupes" }, { value: "ELIMINATOIRE", label: "Éliminatoire" }, { value: "GROUPES_ET_ELIMINATOIRE", label: "Groupes et éliminatoire" }]} value={format} onChange={(event) => setFormat(event.target.value)} />
+        {setupError && <p className={styles.authError} role="alert">{setupError}</p>}
+        <Button type="submit" isLoading={isCreating} loadingText="Création…">Créer et publier</Button>
+      </form> : <EmptyState title="Connectez-vous pour commencer" body="Le premier compte connecté qui crée ce championnat en deviendra l’administrateur." action={<Link to="/connexion"><Button>Se connecter</Button></Link>} />}
+    </div>;
+  }
 
   async function shareChampionship() {
     const url = `${window.location.origin}/`;

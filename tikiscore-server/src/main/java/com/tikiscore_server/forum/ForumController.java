@@ -55,6 +55,15 @@ public class ForumController {
         return forumService.getDiscussions(page, size, categoryId);
     }
 
+    @GetMapping("/moderation/discussions")
+    @PreAuthorize("hasAuthority('PERM_FORUM_MODERATE')")
+    public DiscussionPageResponse getModerationDiscussions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        return forumService.getModerationDiscussions(page, size);
+    }
+
     @GetMapping("/public/forum/discussions/{discussionId}")
     public DiscussionResponse getDiscussion(@PathVariable UUID discussionId) {
         return forumService.getDiscussion(discussionId);
@@ -128,6 +137,17 @@ public class ForumController {
             @RequestParam UUID discussionId
     ) {
         forumService.hide(discussionId, postId, userId(authentication));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/moderation/discussions/{discussionId}/hide")
+    @PreAuthorize("hasAuthority('PERM_FORUM_MODERATE')")
+    public ResponseEntity<Void> hideDiscussion(
+            Authentication authentication,
+            @PathVariable UUID discussionId,
+            @RequestParam(defaultValue = "true") boolean hidden
+    ) {
+        forumService.setDiscussionHidden(discussionId, hidden, userId(authentication));
         return ResponseEntity.noContent().build();
     }
 

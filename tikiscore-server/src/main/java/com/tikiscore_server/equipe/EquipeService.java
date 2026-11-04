@@ -36,7 +36,7 @@ public class EquipeService {
 
     @Transactional(readOnly = true)
     public List<TeamResponse> getPublicTeams() {
-        UUID championshipId = championatService.getConfiguredChampionatId();
+        UUID championshipId = championatService.getPublicChampionatId();
         return equipeRepository.findAllByChampionship_IdAndActiveTrue(championshipId).stream()
                 .map(TeamResponse::from)
                 .toList();
@@ -44,7 +44,7 @@ public class EquipeService {
 
     @Transactional(readOnly = true)
     public TeamResponse getPublicTeam(UUID teamId) {
-        UUID championshipId = championatService.getConfiguredChampionatId();
+        UUID championshipId = championatService.getPublicChampionatId();
         Equipe team = equipeRepository.findByIdAndChampionship_IdAndActiveTrue(teamId, championshipId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Équipe introuvable."));
         return TeamResponse.from(team);

@@ -9,6 +9,7 @@ public enum RoleName {
     USER,
     COMPETITION_ADMIN,
     FORUM_MODERATOR,
+    SYSTEM_ADMIN,
     ADMIN,
     ORGANISATEUR,
     MATCH_MANAGER,

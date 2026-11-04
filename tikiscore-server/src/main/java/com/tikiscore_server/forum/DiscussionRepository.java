@@ -14,6 +14,9 @@ public interface DiscussionRepository extends JpaRepository<Discussion, UUID> {
             UUID championshipId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"category", "author"})
+    Page<Discussion> findAllByChampionship_IdOrderByPinnedDescCreatedAtDesc(UUID championshipId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"category", "author"})
     Page<Discussion> findAllByChampionship_IdAndCategory_IdAndHiddenFalseOrderByPinnedDescCreatedAtDesc(
             UUID championshipId, UUID categoryId, Pageable pageable);
 

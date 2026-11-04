@@ -21,6 +21,7 @@ export const navigationItems: NavigationItem[] = [
   { label: "Profil", to: "/profil", icon: UserRound, primary: true, group: "personal" },
   { label: "Gestion des matchs", to: "/gestion/matchs", icon: Whistle, permission: "match:manage:assigned", group: "management" },
   { label: "Administration", to: "/gestion", icon: ShieldCheck, permission: "competition:manage", group: "management" },
+  { label: "Administration système", to: "/gestion/systeme", icon: ShieldCheck, permission: "system:admin:manage", group: "management" },
   { label: "Équipes et joueurs", to: "/gestion/equipes", icon: UsersRound, permission: "competition:manage", group: "management" },
   { label: "Calendrier", to: "/gestion/calendrier", icon: CalendarDays, permission: "competition:manage", group: "management" },
   { label: "Annonces", to: "/gestion/annonces", icon: FileText, permission: "competition:manage", group: "management" },

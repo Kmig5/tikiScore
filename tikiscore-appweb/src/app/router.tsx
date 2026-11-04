@@ -7,7 +7,7 @@ import AppShell from "./layout/AppShell";
 import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage } from "../pages/PublicPages";
 import { CommunityPage, DiscussionPage } from "../pages/CommunityPages";
 import { AuthenticationPage, NotificationsPage, PreferencesPage, ProfilePage } from "../pages/PersonalPages";
-import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, ScheduleManagementPage, SettingsPage, SharingPage, TeamsManagementPage } from "../pages/ManagementPages";
+import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, ScheduleManagementPage, SettingsPage, SharingPage, SystemAdminPage, TeamsManagementPage } from "../pages/ManagementPages";
 import { EmptyState, PageHeader } from "../pages/shared";
 import styles from "../pages/pages.module.css";
 
@@ -51,6 +51,7 @@ function RouteContent() {
       <Route path="gestion/forum" element={<PermissionRoute permission="forum:moderate"><ModerationPage /></PermissionRoute>} />
       <Route path="gestion/partage" element={<PermissionRoute permission="competition:share"><SharingPage /></PermissionRoute>} />
       <Route path="gestion/parametres" element={<PermissionRoute permission="competition:manage"><SettingsPage /></PermissionRoute>} />
+      <Route path="gestion/systeme" element={<PermissionRoute permission="system:admin:manage"><SystemAdminPage /></PermissionRoute>} />
       <Route path="*" element={<NotFoundPage />} />
     </Route>
   </Routes>;

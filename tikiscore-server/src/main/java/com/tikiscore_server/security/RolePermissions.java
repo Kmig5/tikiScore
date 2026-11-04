@@ -18,8 +18,6 @@ public final class RolePermissions {
             Permission.FORUM_PARTICIPATE,
             Permission.FORUM_REPORT
     );
-    private static final Set<Permission> ALL = EnumSet.allOf(Permission.class);
-
     private RolePermissions() {
     }
 
@@ -40,6 +38,7 @@ public final class RolePermissions {
     private static Set<Permission> permissionsFor(RoleName role) {
         return switch (role) {
             case USER -> MEMBER;
+            case SYSTEM_ADMIN -> EnumSet.allOf(Permission.class);
             case MATCH_MANAGER -> EnumSet.of(Permission.CHAMPIONSHIP_READ, Permission.MATCH_MANAGE_ASSIGNED);
             case FORUM_MODERATOR -> EnumSet.of(
                     Permission.CHAMPIONSHIP_READ,
@@ -48,7 +47,8 @@ public final class RolePermissions {
                     Permission.FORUM_REPORT,
                     Permission.FORUM_MODERATE
             );
-            case COMPETITION_ADMIN, ADMIN, ORGANISATEUR -> ALL;
+                case COMPETITION_ADMIN, ADMIN, ORGANISATEUR -> EnumSet.complementOf(
+                    EnumSet.of(Permission.SYSTEM_ADMIN_MANAGE));
             case TEAM_MANAGER -> MEMBER;
         };
     }

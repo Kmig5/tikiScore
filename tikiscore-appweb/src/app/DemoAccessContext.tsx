@@ -15,6 +15,7 @@ const permissionNames: Record<string, Permission> = {
   "match:manage:assigned": "match:manage:assigned",
   "competition:manage": "competition:manage",
   "competition:share": "competition:share",
+  "system:admin:manage": "system:admin:manage",
 };
 
 export function DemoAccessProvider({ children }: { children: ReactNode }) {
@@ -44,6 +45,9 @@ export function DemoAccessProvider({ children }: { children: ReactNode }) {
     async register(username: string, displayName: string, password: string) {
       setUser(await tikiScoreApi.register(username, displayName, password));
       await tikiScoreService.refresh();
+    },
+    async refreshCurrentUser() {
+      setUser(await tikiScoreApi.getCurrentUser());
     },
     async signOut() { await tikiScoreApi.signOut(); setUser(null); },
   }), [user]);

@@ -2,8 +2,7 @@ import type { Announcement, Championship, ChampionshipNotification, Championship
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 let accessToken: string | null = null;
-let csrfToken: string | null = null;
-let csrfHeader = "X-XSRF-TOKEN";
+const csrfHeader = "X-XSRF-TOKEN";
 let authenticatedUser: AuthenticatedUser | null = null;
 
 export interface AuthenticatedUser {
@@ -21,7 +20,7 @@ interface TokenResponse {
 }
 interface ApiErrorBody { message?: string; detail?: string; }
 interface CompetitionDto extends Championship { status: string; forumPublic: boolean; }
-interface TeamDto extends Team {}
+type TeamDto = Team;
 interface PlayerDto { id: string; displayName: string; jerseyNumber: number | null; teamId: string; position?: string; }
 interface MatchDto {
   id: string; groupId: string | null; homeTeamId: string; awayTeamId: string; startsAt: string; venue: string;
@@ -31,15 +30,15 @@ interface EventDto extends MatchEvent {
   clientEventId: string; addedTime: number; sequence: number; state: string;
   homeScoreAfter: number; awayScoreAfter: number;
 }
-interface GroupDto extends Group {}
+type GroupDto = Group;
 interface StandingDto extends Standing { position: number; teamName: string; goalDifference: number; }
 interface PlayerStatisticDto { playerId: string; playerName: string; teamId: string; teamName: string; goals: number; assists: number; yellowCards: number; redCards: number; }
-interface DiscussionDto extends Discussion {}
+type DiscussionDto = Discussion;
 interface CategoryDto { id: string; name: string; }
 interface PageDto<T> { content: T[]; }
 interface NotificationPageDto extends PageDto<ChampionshipNotification> { unreadCount: number; }
 export interface ShareDto { publicUrl: string; shortUrl?: string; }
-interface ReportDto extends ForumReport {}
+type ReportDto = ForumReport;
 export interface AdminUser { id: string; username: string; displayName: string; roles: string[]; }
 
 export class ApiError extends Error {
@@ -64,7 +63,6 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
     const cookieToken = readCookie("XSRF-TOKEN");
     if (cookieToken) headers.set(csrfHeader, decodeURIComponent(cookieToken));
-    else if (csrfToken) headers.set(csrfHeader, csrfToken);
   }
   const response = await fetch(`${apiBase}${path}`, { ...init, headers, credentials: "include" });
   if (response.status === 401 && accessToken && !retried && !path.startsWith("/auth/")) {
@@ -83,12 +81,6 @@ async function request<T>(path: string, init: RequestInit = {}, retried = false)
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
-}
-
-async function ensureCsrf(): Promise<void> {
-  const result = await request<{ token: string; headerName: string }>("/auth/csrf");
-  csrfToken = result.token;
-  csrfHeader = result.headerName;
 }
 
 async function refreshSession(): Promise<AuthenticatedUser | null> {
@@ -148,7 +140,6 @@ export const tikiScoreApi = {
     const result = await request<TokenResponse>("/auth/register", { method: "POST", body: JSON.stringify({ username, displayName, password }) });
     accessToken = result.accessToken;
     authenticatedUser = result.user;
-    console.log("User Authentifié est : ", authenticatedUser)
     return result.user;
   },
   async restoreSession(): Promise<AuthenticatedUser | null> {
@@ -161,12 +152,28 @@ export const tikiScoreApi = {
     accessToken = null;
     authenticatedUser = null;
   },
-  async getCurrentUser(): Promise<AuthenticatedUser> { return request("/users/me"); },
+  async getCurrentUser(): Promise<AuthenticatedUser> {
+    const user = await request<AuthenticatedUser>("/users/me");
+    authenticatedUser = user;
+    return user;
+  },
   async updateProfile(input: { displayName: string }): Promise<AuthenticatedUser> {
     return request("/users/me", { method: "PATCH", body: JSON.stringify(input) });
   },
   async updateChampionship(input: { name?: string; edition?: string; description?: string; locality?: string; forumPublic?: boolean; format?: string }): Promise<void> {
     await request("/admin/competition", { method: "PATCH", body: JSON.stringify(input) });
+  },
+  async createChampionship(input: { name: string; slug: string; edition?: string; description?: string; locality?: string; format: string }): Promise<void> {
+    await request("/admin/competition", { method: "POST", body: JSON.stringify(input) });
+  },
+  async getAdminChampionship(): Promise<CompetitionDto> {
+    return request("/admin/competition");
+  },
+  async getSystemAdminUsers(): Promise<AdminUser[]> {
+    return request("/system/admin/users");
+  },
+  async transferSystemAdmin(targetUserId: string): Promise<AdminUser> {
+    return request("/system/admin", { method: "PATCH", body: JSON.stringify({ targetUserId }) });
   },
   async getPublicData(): Promise<TikiScoreData> {
     const [competition, groups, teams, matchDtos, standingDtos, scorers, assists, cards, statistics, announcements, forumCategories, share, discussionsPage] = await Promise.all([
@@ -232,8 +239,15 @@ export const tikiScoreApi = {
   async getAdminUsers(): Promise<AdminUser[]> {
     return request("/admin/users");
   },
+  async getModerationDiscussions(): Promise<Discussion[]> {
+    const page = await request<PageDto<DiscussionDto>>("/moderation/discussions?page=0&size=100");
+    return page.content.map(mapDiscussion);
+  },
   async createMatch(input: { startsAt: string; venue: string; groupId?: string; homeTeamId: string; awayTeamId: string }): Promise<void> {
     await request("/admin/matches", { method: "POST", body: JSON.stringify(input) });
+  },
+  async publishChampionship(): Promise<void> {
+    await request("/admin/competition/publish", { method: "POST" });
   },
   async createTeam(input: Omit<Team, "id">): Promise<void> {
     await request("/admin/teams", { method: "POST", body: JSON.stringify({ name: input.name, shortName: input.shortName, locality: input.locality, primaryColor: input.primaryColor, secondaryColor: input.secondaryColor, groupId: input.groupId || null }) });
@@ -260,7 +274,7 @@ export const tikiScoreApi = {
   async updateForumState(discussionId: string, state: { pinned?: boolean; closed?: boolean; hidden?: boolean }): Promise<void> {
     if (state.pinned !== undefined) await request(`/moderation/discussions/${discussionId}/pin?pinned=${state.pinned}`, { method: "POST" });
     if (state.closed !== undefined) await request(`/moderation/discussions/${discussionId}/close?closed=${state.closed}`, { method: "POST" });
-    if (state.hidden !== undefined) await request(`/moderation/posts/${discussionId}/hide?discussionId=${discussionId}`, { method: "POST" });
+    if (state.hidden !== undefined) await request(`/moderation/discussions/${discussionId}/hide?hidden=${state.hidden}`, { method: "POST" });
   },
   async resolveReport(id: string): Promise<void> { await request(`/moderation/reports/${id}/resolve`, { method: "POST" }); },
   async getEvents(matchId: string, afterSequence = 0): Promise<MatchEvent[]> {

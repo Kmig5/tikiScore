@@ -38,7 +38,7 @@ public class ChampionatController {
     }
 
     @PostMapping("/admin/competition")
-    @PreAuthorize("hasAuthority('PERM_COMPETITION_MANAGE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ChampionatResponse> createChampionat(
             Authentication authentication,
             @Valid @RequestBody CreateChampionatRequest request

@@ -4,6 +4,9 @@ import com.tikiscore_server.championat.dto.ChampionatResponse;
 import com.tikiscore_server.championat.dto.CreateChampionatRequest;
 import com.tikiscore_server.championat.dto.UpdateChampionatRequest;
 import com.tikiscore_server.championat.enums.ChampionatStatus;
+import com.tikiscore_server.role.Role;
+import com.tikiscore_server.role.RoleName;
+import com.tikiscore_server.role.RoleRepository;
 import com.tikiscore_server.user.User;
 import com.tikiscore_server.user.UserRepository;
 import java.util.List;
@@ -28,15 +31,18 @@ public class ChampionatService {
 
     private final ChampionatRepository championatRepository;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final String publicUrl;
 
     public ChampionatService(
             ChampionatRepository championatRepository,
             UserRepository userRepository,
+            RoleRepository roleRepository,
             @Value("${TIKISCORE_PUBLIC_URL:/}") String publicUrl
     ) {
         this.championatRepository = championatRepository;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.publicUrl = publicUrl;
     }
 
@@ -71,7 +77,10 @@ public class ChampionatService {
     @Transactional
     public ChampionatResponse createChampionat(UUID organizerId, CreateChampionatRequest request) {
         validateDateRange(request.startDate(), request.endDate());
-        validateScoring(request.pointsForWin(), request.pointsForDraw(), request.pointsForLoss());
+        int pointsForWin = request.pointsForWin() == null ? 3 : request.pointsForWin();
+        int pointsForDraw = request.pointsForDraw() == null ? 1 : request.pointsForDraw();
+        int pointsForLoss = request.pointsForLoss() == null ? 0 : request.pointsForLoss();
+        validateScoring(pointsForWin, pointsForDraw, pointsForLoss);
         String timeZone = validateTimeZone(request.timeZone());
         if (championatRepository.existsBySlugIgnoreCase(request.slug())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce slug de championnat est déjà utilisé.");
@@ -92,12 +101,17 @@ public class ChampionatService {
         championat.setFormat(request.format());
         championat.setStatus(ChampionatStatus.BROUILLON);
         championat.setForumPublic(request.forumPublic() == null || request.forumPublic());
-        championat.setPointsForWin(request.pointsForWin() == null ? 3 : request.pointsForWin());
-        championat.setPointsForDraw(request.pointsForDraw() == null ? 1 : request.pointsForDraw());
-        championat.setPointsForLoss(request.pointsForLoss() == null ? 0 : request.pointsForLoss());
+        championat.setPointsForWin(pointsForWin);
+        championat.setPointsForDraw(pointsForDraw);
+        championat.setPointsForLoss(pointsForLoss);
         championat.setTimeZone(timeZone);
         championat.setOrganisateur(organizer);
-        return ChampionatResponse.from(championatRepository.save(championat), publicUrl);
+        Role competitionAdminRole = roleRepository.findByName(RoleName.COMPETITION_ADMIN)
+            .orElseThrow(() -> new IllegalStateException("Required COMPETITION_ADMIN role is missing."));
+        organizer.getRoles().add(competitionAdminRole);
+        Championat savedChampionat = championatRepository.save(championat);
+        userRepository.save(organizer);
+        return ChampionatResponse.from(savedChampionat, publicUrl);
     }
 
     @Transactional

@@ -94,6 +94,16 @@ public class ForumService {
                 discussions.getSize(), discussions.getTotalElements(), discussions.getTotalPages());
     }
 
+            @Transactional(readOnly = true)
+            public DiscussionPageResponse getModerationDiscussions(int page, int size) {
+            UUID championshipId = championatService.getConfiguredChampionatId();
+            Page<Discussion> discussions = discussionRepository.findAllByChampionship_IdOrderByPinnedDescCreatedAtDesc(
+                championshipId, PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size))));
+            return new DiscussionPageResponse(discussions.getContent().stream()
+                .map(discussion -> toResponse(discussion, List.of())).toList(), discussions.getNumber(),
+                discussions.getSize(), discussions.getTotalElements(), discussions.getTotalPages());
+            }
+
     @Transactional(readOnly = true)
     public DiscussionResponse getDiscussion(UUID discussionId) {
         Discussion discussion = discussionRepository.findByIdAndChampionship_IdAndHiddenFalse(
@@ -180,6 +190,16 @@ public class ForumService {
         auditService.record(moderatorId, "FORUM_DISCUSSION_STATUS_CHANGED", "Discussion", discussionId,
             "closed=" + closed);
     }
+
+            @Transactional
+            public void setDiscussionHidden(UUID discussionId, boolean hidden, UUID moderatorId) {
+            Discussion discussion = requireDiscussion(discussionId);
+            discussion.setHidden(hidden);
+            discussion.setModeratedBy(requireUser(moderatorId));
+            discussion.setModeratedAt(Instant.now());
+            auditService.record(moderatorId, hidden ? "FORUM_DISCUSSION_HIDDEN" : "FORUM_DISCUSSION_RESTORED",
+                "Discussion", discussionId, null);
+            }
 
     @Transactional
     public void hide(UUID discussionId, UUID replyId, UUID moderatorId) {

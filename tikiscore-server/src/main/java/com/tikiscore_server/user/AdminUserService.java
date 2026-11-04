@@ -59,6 +59,32 @@ public class AdminUserService {
         return AdminUserResponse.from(userRepository.save(target));
     }
 
+        @Transactional
+    public AdminUserResponse transferSystemAdmin(UUID targetUserId, UUID actorId) {
+        User actor = userRepository.findById(actorId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (actor.getRoles().stream().noneMatch(role -> role.getName() == RoleName.SYSTEM_ADMIN)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+        User target = userRepository.findById(targetUserId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable."));
+        if (actorId.equals(targetUserId)) return AdminUserResponse.from(target);
+
+        Role systemAdminRole = roleRepository.findByName(RoleName.SYSTEM_ADMIN)
+            .orElseThrow(() -> new IllegalStateException("Required SYSTEM_ADMIN role is missing."));
+        Role userRole = roleRepository.findByName(RoleName.USER)
+            .orElseThrow(() -> new IllegalStateException("Required USER role is missing."));
+        target.getRoles().add(userRole);
+        target.getRoles().add(systemAdminRole);
+        actor.getRoles().add(userRole);
+        actor.getRoles().removeIf(role -> role.getName() == RoleName.SYSTEM_ADMIN);
+        userRepository.save(target);
+        userRepository.save(actor);
+        auditService.record(actorId, "SYSTEM_ADMIN_TRANSFERRED", "User", targetUserId,
+            "from=" + actor.getUsername() + ";to=" + target.getUsername());
+        return AdminUserResponse.from(target);
+        }
+
     private void ensureBootstrapRoleAvailable(User target, Set<RoleName> requestedRoles) {
         boolean targetIsAdmin = target.getRoles().stream().anyMatch(role -> role.getName() == RoleName.COMPETITION_ADMIN
             || role.getName() == RoleName.ADMIN || role.getName() == RoleName.ORGANISATEUR);

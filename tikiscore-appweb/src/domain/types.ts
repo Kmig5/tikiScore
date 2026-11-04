@@ -8,7 +8,8 @@ export type Permission =
   | "forum:moderate"
   | "match:manage:assigned"
   | "competition:manage"
-  | "competition:share";
+  | "competition:share"
+  | "system:admin:manage";
 
 export type DemoPersonaId = "visitor" | "member" | "matchManager" | "administrator" | "moderator";
 export type MatchStatus = "scheduled" | "live" | "halftime" | "finished" | "postponed" | "cancelled";

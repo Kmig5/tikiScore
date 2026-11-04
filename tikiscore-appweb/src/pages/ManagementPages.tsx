@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowLeftRight, Download, FilePlus2, Goal, Link2, Pause, Pin, Play, Printer, QrCode, RefreshCw, RotateCcw, ShieldAlert, Square, UsersRound, Whistle } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Badge from "../composants/ui/Badge";
 import Button from "../composants/ui/Button";
 import ConfirmDialog from "../composants/ui/ConfirmDialog";
@@ -10,6 +10,7 @@ import Switch from "../composants/ui/Switch";
 import { useDemoAccess } from "../app/useDemoAccess";
 import { useLiveMatchMinute, useTikiScoreData } from "../app/hooks";
 import { hasPermission } from "../domain/permissions";
+import type { Discussion } from "../domain/types";
 import type { MatchEventType } from "../domain/types";
 import { tikiScoreService } from "../services/tikiScoreService";
 import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTransport";
@@ -299,17 +300,34 @@ export function ModerationPage() {
   const data = useTikiScoreData();
   const { permissions } = useDemoAccess();
   const { success, error } = useToast();
-  if (!hasPermission(permissions, "forum:moderate")) return <div className={styles.page}><PageHeader title="Modération" /><PermissionNotice permission="forum:moderate" /></div>;
-  const discussions = data.discussions;
+  const canModerate = hasPermission(permissions, "forum:moderate");
+  const [discussions, setDiscussions] = useState<Discussion[]>(data.discussions);
+  useEffect(() => {
+    if (!canModerate) return;
+    let active = true;
+    void tikiScoreApi.getModerationDiscussions().then((items) => {
+      if (active) setDiscussions(items);
+    }).catch((cause: unknown) => {
+      if (active) error(cause instanceof Error ? cause.message : "Impossible de charger les discussions à modérer.");
+    });
+    return () => { active = false; };
+  }, [canModerate, error]);
+  if (!canModerate) return <div className={styles.page}><PageHeader title="Modération" /><PermissionNotice permission="forum:moderate" /></div>;
+
+  async function updateDiscussion(discussionId: string, state: { pinned?: boolean; closed?: boolean; hidden?: boolean }) {
+    await tikiScoreService.setDiscussionState(discussionId, state);
+    setDiscussions(await tikiScoreApi.getModerationDiscussions());
+  }
+
   return <div className={styles.page}><PageHeader eyebrow="Espace modération" title="Modération du forum" description="Traitez les signalements et appliquez les décisions de modération." />
     <section className={styles.section}><SectionHeading title={`Signalements ouverts (${data.reports.filter((report) => !report.resolved).length})`} />{data.reports.some((report) => !report.resolved) ? <div className={styles.list}>{data.reports.filter((report) => !report.resolved).map((report) => {
       const reportedDiscussion = discussions.find((discussion) => discussion.id === report.discussionId);
       return <article className={styles.discussion} key={report.id}><div className={styles.discussionMeta}><Badge variant="warning">À examiner</Badge><span>{new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(report.createdAt))}</span></div><h3>{reportedDiscussion?.title ?? "Discussion supprimée"}</h3><p>{report.reason}</p><Button size="small" variant="secondary" onClick={() => { void tikiScoreService.resolveForumReport(report.id).then(() => success("Signalement traité.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de traiter le signalement.")); }}>Marquer comme traité</Button></article>;
     })}</div> : <EmptyState title="Aucun signalement ouvert" body="Les nouveaux signalements apparaîtront dans cette file." />}</section>
     {discussions.length ? <div className={styles.list}>{discussions.map((discussion) => <article className={styles.discussion} key={discussion.id}><div className={styles.discussionMeta}><Badge variant={discussion.hidden ? "danger" : "neutral"}>{discussion.hidden ? "Masquée" : discussion.closed ? "Fermée" : "Visible"}</Badge><span>{discussion.category} · {discussion.authorName}</span></div><h3>{discussion.title}</h3><p>{discussion.body}</p><div className={styles.discussionActions}>
-      <Button size="small" variant="secondary" onClick={() => { void tikiScoreService.setDiscussionState(discussion.id, { pinned: !discussion.pinned }).then(() => success(discussion.pinned ? "Discussion désépinglée." : "Discussion épinglée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}><Pin size={14} aria-hidden="true" />{discussion.pinned ? "Désépingler" : "Épingler"}</Button>
-      <Button size="small" variant="secondary" onClick={() => { void tikiScoreService.setDiscussionState(discussion.id, { closed: !discussion.closed }).then(() => success(discussion.closed ? "Discussion rouverte." : "Discussion fermée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.closed ? "Rouvrir" : "Fermer"}</Button>
-      <Button size="small" variant="danger" onClick={() => { void tikiScoreService.setDiscussionState(discussion.id, { hidden: !discussion.hidden }).then(() => success(discussion.hidden ? "Discussion réaffichée." : "Discussion masquée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.hidden ? "Réafficher" : "Masquer"}</Button>
+      <Button size="small" variant="secondary" onClick={() => { void updateDiscussion(discussion.id, { pinned: !discussion.pinned }).then(() => success(discussion.pinned ? "Discussion désépinglée." : "Discussion épinglée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}><Pin size={14} aria-hidden="true" />{discussion.pinned ? "Désépingler" : "Épingler"}</Button>
+      <Button size="small" variant="secondary" onClick={() => { void updateDiscussion(discussion.id, { closed: !discussion.closed }).then(() => success(discussion.closed ? "Discussion rouverte." : "Discussion fermée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.closed ? "Rouvrir" : "Fermer"}</Button>
+      <Button size="small" variant="danger" onClick={() => { void updateDiscussion(discussion.id, { hidden: !discussion.hidden }).then(() => success(discussion.hidden ? "Discussion réaffichée." : "Discussion masquée.")).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "La modification a échoué.")); }}>{discussion.hidden ? "Réafficher" : "Masquer"}</Button>
     </div></article>)}</div> : <EmptyState title="Aucune discussion à modérer" body="Les discussions signalées apparaîtront ici lorsque l’API de modération sera disponible." />}
   </div>;
 }
@@ -387,5 +405,60 @@ export function SettingsPage() {
       <div className={styles.metricGrid}><div className={styles.metric}><span>Nom</span><strong style={{ fontSize: 15 }}>{data.championship.name}</strong></div><div className={styles.metric}><span>Édition</span><strong style={{ fontSize: 15 }}>{data.championship.edition}</strong></div><div className={styles.metric}><span>Localité</span><strong style={{ fontSize: 15 }}>{data.championship.locality}</strong></div><div className={styles.metric}><span>Format</span><strong style={{ fontSize: 15 }}>{data.championship.format}</strong></div></div>
     </section>
     <section className={styles.panel}><h2 className={styles.panelTitle}>Accès public</h2><Switch label="Forum visible en lecture aux visiteurs" description="La publication reste réservée aux membres connectés." checked={allowReadOnlyForum} onChange={(enabled) => { void tikiScoreService.setForumPublic(enabled).then(() => { setAllowReadOnlyForum(enabled); success("Paramètre enregistré."); }).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible d’enregistrer le paramètre.")); }} /></section>
+  </div>;
+}
+
+export function SystemAdminPage() {
+  const { user, refreshCurrentUser } = useDemoAccess();
+  const { error, success } = useToast();
+  const navigate = useNavigate();
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [targetUserId, setTargetUserId] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void tikiScoreApi.getSystemAdminUsers().then((items) => {
+      if (active) setUsers(items);
+    }).catch((cause: unknown) => {
+      if (active) error(cause instanceof Error ? cause.message : "Impossible de charger les comptes.");
+    }).finally(() => {
+      if (active) setIsLoading(false);
+    });
+    return () => { active = false; };
+  }, [error]);
+
+  const targetUser = users.find((candidate) => candidate.id === targetUserId);
+
+  async function transfer() {
+    if (!targetUser) return;
+    setIsTransferring(true);
+    try {
+      await tikiScoreApi.transferSystemAdmin(targetUser.id);
+      await refreshCurrentUser();
+      success(`Le rôle administrateur système a été transféré à ${targetUser.displayName}.`);
+      navigate("/profil", { replace: true });
+    } catch (cause) {
+      error(cause instanceof Error ? cause.message : "Le transfert n’a pas abouti.");
+    } finally {
+      setIsTransferring(false);
+      setIsConfirmationOpen(false);
+    }
+  }
+
+  const availableUsers = users.filter((candidate) => candidate.id !== user?.id);
+
+  return <div className={styles.page}>
+    <PageHeader eyebrow="Administration système" title="Transférer l’administration" description="Le transfert retire immédiatement cette permission de votre compte." />
+    <section className={`${styles.panel} ${styles.formStack}`}>
+      <h2 className={styles.panelTitle}>Compte destinataire</h2>
+      {isLoading ? <p role="status">Chargement des comptes…</p> : <>
+        {availableUsers.length > 0 ? <Select label="Utilisateur" options={availableUsers.map((candidate) => ({ value: candidate.id, label: `${candidate.displayName} · @${candidate.username}` }))} value={targetUserId} onChange={(event) => setTargetUserId(event.target.value)} helperText="Le nouveau compte recevra les droits système globaux." /> : <p className={styles.dataNote}>Aucun autre compte n’est disponible. Créez d’abord un compte utilisateur.</p>}
+        <Button variant="danger" disabled={!targetUserId || availableUsers.length === 0} onClick={() => setIsConfirmationOpen(true)}>Transférer le rôle système</Button>
+      </>}
+    </section>
+    <ConfirmDialog open={isConfirmationOpen} title="Confirmer le transfert" message={`Le compte ${targetUser?.displayName ?? "sélectionné"} deviendra administrateur système et votre compte perdra immédiatement ce rôle.`} variant="danger" confirmLabel="Transférer" isLoading={isTransferring} onCancel={() => setIsConfirmationOpen(false)} onConfirm={() => void transfer()} />
   </div>;
 }
