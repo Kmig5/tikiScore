@@ -42,7 +42,10 @@ export interface Player {
   displayName: string;
   jerseyNumber: number | null;
   teamId: string;
+  position?: PlayerPosition;
 }
+
+export type PlayerPosition = "GARDIEN" | "DEFENSEUR" | "MILIEU" | "ATTAQUANT";
 
 export interface Group {
   id: string;

@@ -10,7 +10,7 @@ import Switch from "../composants/ui/Switch";
 import { useDemoAccess } from "../app/useDemoAccess";
 import { useLiveMatchMinute, useTikiScoreData } from "../app/hooks";
 import { hasPermission } from "../domain/permissions";
-import type { Discussion } from "../domain/types";
+import type { Discussion, PlayerPosition } from "../domain/types";
 import type { MatchEventType } from "../domain/types";
 import { tikiScoreService } from "../services/tikiScoreService";
 import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTransport";
@@ -266,6 +266,7 @@ export function TeamsManagementPage() {
   const [playerName, setPlayerName] = useState("");
   const [playerTeamId, setPlayerTeamId] = useState(data.teams[0]?.id ?? "");
   const [playerNumber, setPlayerNumber] = useState("1");
+  const [playerPosition, setPlayerPosition] = useState<PlayerPosition>("ATTAQUANT");
   if (!hasPermission(permissions, "competition:manage")) return <div className={styles.page}><PageHeader title="Équipes et joueurs" /><PermissionNotice permission="competition:manage" /></div>;
 
   async function submitGroup(event: FormEvent<HTMLFormElement>) {
@@ -298,7 +299,7 @@ export function TeamsManagementPage() {
     event.preventDefault();
     if (!playerName.trim() || !playerTeamId) return;
     try {
-      await tikiScoreService.addPlayer({ displayName: playerName.trim(), jerseyNumber: Math.max(1, Number(playerNumber) || 1), teamId: playerTeamId });
+      await tikiScoreService.addPlayer({ displayName: playerName.trim(), jerseyNumber: Math.max(1, Number(playerNumber) || 1), teamId: playerTeamId, position: playerPosition });
       setPlayerName("");
       success("Joueur ajouté.");
     } catch (cause) {
@@ -320,6 +321,7 @@ export function TeamsManagementPage() {
       <label className={styles.fieldLabel}>Nom affiché<input className={styles.formInput} value={playerName} onChange={(event) => setPlayerName(event.target.value)} maxLength={80} required /></label>
       <div className={styles.fieldLabel}><span>Équipe</span><Select label="Équipe du joueur" options={data.teams.map((team) => ({ value: team.id, label: team.name }))} value={playerTeamId} onChange={(event) => setPlayerTeamId(event.target.value)} /></div>
       <label className={styles.fieldLabel}>Numéro<input className={styles.formInput} type="number" inputMode="numeric" min="1" max="99" value={playerNumber} onChange={(event) => setPlayerNumber(event.target.value)} required /></label>
+      <Select label="Poste" options={[{ value: "GARDIEN", label: "Gardien" }, { value: "DEFENSEUR", label: "Défenseur" }, { value: "MILIEU", label: "Milieu" }, { value: "ATTAQUANT", label: "Attaquant" }]} value={playerPosition} onChange={(event) => setPlayerPosition(event.target.value as PlayerPosition)} />
       <Button type="submit" disabled={!playerName.trim()}><UsersRound size={15} aria-hidden="true" />Ajouter joueur</Button>
     </form>
     <section className={styles.section}><SectionHeading title="Équipes inscrites" /><div className={styles.metricGrid}>{data.teams.map((team) => <article className={styles.metric} key={team.id}><TeamMark teamId={team.id} /><strong style={{ fontSize: 14 }}>{team.name}</strong><span>{data.groups.find((group) => group.id === team.groupId)?.name} · {team.locality}</span><span>{data.players.filter((player) => player.teamId === team.id).length} joueur(s)</span></article>)}</div></section>

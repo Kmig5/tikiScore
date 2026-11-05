@@ -91,7 +91,7 @@ export function StandingList({ standings }: { standings: Standing[]; compact?: b
     {sorted.map((standing, index) => {
       const team = data.teams.find((entry) => entry.id === standing.teamId);
       return <div className={styles.standingRow} key={standing.teamId}>
-        <span className={styles.standingTeam}><b>{index + 1}</b><TeamMark teamId={standing.teamId} /><strong>{team?.name ?? "Équipe"}</strong></span>
+        {team ? <Link className={styles.standingTeam} to={`/equipes/${team.id}`}><b>{index + 1}</b><TeamMark teamId={standing.teamId} /><strong>{team.name}</strong></Link> : <span className={styles.standingTeam}><b>{index + 1}</b><TeamMark teamId={standing.teamId} /><strong>Équipe</strong></span>}
         <span>{standing.played}</span>
         <span>{standing.goalsFor - standing.goalsAgainst > 0 ? "+" : ""}{standing.goalsFor - standing.goalsAgainst}</span>
         <strong>{standing.points}</strong>

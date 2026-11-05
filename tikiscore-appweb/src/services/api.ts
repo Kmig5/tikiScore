@@ -1,4 +1,4 @@
-import type { Announcement, Championship, ChampionshipNotification, ChampionshipStatistics, Discussion, DiscussionReply, ForumReport, Group, LeaderboardEntry, Match, MatchEvent, MatchEventInput, MatchStatus, Player, Standing, Team, TikiScoreData } from "../domain/types";
+import type { Announcement, Championship, ChampionshipNotification, ChampionshipStatistics, Discussion, DiscussionReply, ForumReport, Group, LeaderboardEntry, Match, MatchEvent, MatchEventInput, MatchStatus, Player, PlayerPosition, Standing, Team, TikiScoreData } from "../domain/types";
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 let accessToken: string | null = null;
@@ -41,6 +41,25 @@ export interface PublicChampionshipOption {
   status: string;
 }
 
+export interface MatchRatingPlayer {
+  playerId: string;
+  teamId: string;
+  playerName: string;
+  teamName: string;
+  myRating: number | null;
+  averageRating: number | null;
+  ratingCount: number;
+  manOfTheMatch: boolean;
+}
+
+export interface MatchRatingData {
+  matchId: string;
+  matchStatus: string;
+  ratingsOpen: boolean;
+  resultsVisible: boolean;
+  players: MatchRatingPlayer[];
+}
+
 interface TokenResponse {
   accessToken: string;
   tokenType: string;
@@ -49,7 +68,7 @@ interface TokenResponse {
 interface ApiErrorBody { message?: string; detail?: string; }
 interface CompetitionDto extends Championship { slug: string; status: string; forumPublic: boolean; }
 type TeamDto = Team;
-interface PlayerDto { id: string; displayName: string; jerseyNumber: number | null; teamId: string; position?: string; }
+interface PlayerDto { id: string; displayName: string; jerseyNumber: number | null; teamId: string; position?: PlayerPosition; }
 interface MatchDto {
   id: string; groupId: string | null; homeTeamId: string; awayTeamId: string; startsAt: string; venue: string;
   status: MatchStatus; homeScore: number; awayScore: number; minute: number; version: number;
@@ -290,6 +309,12 @@ export const tikiScoreApi = {
     ]);
     return mapMatch(match, events);
   },
+  async getMatchRatings(matchId: string): Promise<MatchRatingData> {
+    return request(`/public/matches/${matchId}/ratings`);
+  },
+  async rateMatchPlayer(matchId: string, playerId: string, score: number): Promise<MatchRatingData> {
+    return request(`/matches/${matchId}/ratings/${playerId}`, { method: "PUT", body: JSON.stringify({ score }) });
+  },
   async getForumCategories(): Promise<CategoryDto[]> {
     return request("/public/forum/categories");
   },
@@ -313,7 +338,7 @@ export const tikiScoreApi = {
     await request("/admin/teams", { method: "POST", body: JSON.stringify({ name: input.name, shortName: input.shortName, locality: input.locality, primaryColor: input.primaryColor, secondaryColor: input.secondaryColor, groupId: input.groupId || null }) });
   },
   async createPlayer(input: Omit<Player, "id">): Promise<void> {
-    await request(`/admin/teams/${input.teamId}/players`, { method: "POST", body: JSON.stringify({ displayName: input.displayName, jerseyNumber: input.jerseyNumber, position: "ATTAQUANT" }) });
+    await request(`/admin/teams/${input.teamId}/players`, { method: "POST", body: JSON.stringify({ displayName: input.displayName, jerseyNumber: input.jerseyNumber, position: input.position ?? "ATTAQUANT" as PlayerPosition }) });
   },
   async createGroup(name: string): Promise<void> {
     await request("/admin/groups", { method: "POST", body: JSON.stringify({ name }) });

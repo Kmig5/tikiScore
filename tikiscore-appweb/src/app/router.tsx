@@ -4,7 +4,7 @@ import Button from "../composants/ui/Button";
 import { useDemoAccess } from "./useDemoAccess";
 import type { Permission } from "../domain/types";
 import AppShell from "./layout/AppShell";
-import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage } from "../pages/PublicPages";
+import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage, TeamPage } from "../pages/PublicPages";
 import { CommunityPage, DiscussionPage } from "../pages/CommunityPages";
 import { AuthenticationPage, NotificationsPage, PreferencesPage, ProfilePage } from "../pages/PersonalPages";
 import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, RolesManagementPage, ScheduleManagementPage, SettingsPage, SharingPage, SystemAdminPage, TeamsManagementPage } from "../pages/ManagementPages";
@@ -44,6 +44,7 @@ function RouteContent() {
         <Route index element={<HomePage />} />
         <Route path="matchs" element={<MatchesPage />} />
         <Route path="matchs/:matchId" element={<MatchDetailPage />} />
+        <Route path="equipes/:teamId" element={<TeamPage />} />
         <Route path="classements" element={<StandingsPage />} />
         <Route path="classements/buteurs" element={<StandingsPage type="goals" />} />
         <Route path="classements/passeurs" element={<StandingsPage type="assists" />} />

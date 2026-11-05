@@ -6,6 +6,9 @@ import com.tikiscore_server.match.dto.MatchEventRequest;
 import com.tikiscore_server.match.dto.MatchEventResponse;
 import com.tikiscore_server.match.dto.MatchResponse;
 import com.tikiscore_server.match.dto.UpdateMatchRequest;
+import com.tikiscore_server.match.rating.MatchPlayerRatingRequest;
+import com.tikiscore_server.match.rating.MatchPlayerRatingResponse;
+import com.tikiscore_server.match.rating.MatchPlayerRatingService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,9 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MatchController {
 
     private final MatchService matchService;
+    private final MatchPlayerRatingService ratingService;
 
-    public MatchController(MatchService matchService) {
+    public MatchController(MatchService matchService, MatchPlayerRatingService ratingService) {
         this.matchService = matchService;
+        this.ratingService = ratingService;
     }
 
     @GetMapping("/public/matches")
@@ -69,6 +75,22 @@ public class MatchController {
             @RequestParam(defaultValue = "0") long afterSequence
     ) {
         return matchService.getEvents(matchId, afterSequence);
+    }
+
+    @GetMapping("/public/matches/{matchId}/ratings")
+    public MatchPlayerRatingResponse getRatings(@PathVariable UUID matchId, Authentication authentication) {
+        return ratingService.getRatings(matchId, optionalUserId(authentication));
+    }
+
+    @PutMapping("/matches/{matchId}/ratings/{playerId}")
+    @PreAuthorize("isAuthenticated()")
+    public MatchPlayerRatingResponse ratePlayer(
+            Authentication authentication,
+            @PathVariable UUID matchId,
+            @PathVariable UUID playerId,
+            @Valid @RequestBody MatchPlayerRatingRequest request
+    ) {
+        return ratingService.ratePlayer(matchId, playerId, userId(authentication), request.score());
     }
 
     @PostMapping("/admin/matches")
@@ -173,5 +195,9 @@ public class MatchController {
 
     private UUID userId(Authentication authentication) {
         return (UUID) authentication.getPrincipal();
+    }
+
+    private UUID optionalUserId(Authentication authentication) {
+        return authentication != null && authentication.getPrincipal() instanceof UUID id ? id : null;
     }
 }
