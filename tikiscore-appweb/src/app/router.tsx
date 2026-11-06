@@ -1,16 +1,37 @@
-import type { ReactNode } from "react";
+import { lazy, type ReactNode } from "react";
 import { Link, Outlet, Route, Routes } from "react-router-dom";
 import Button from "../composants/ui/Button";
 import { useDemoAccess } from "./useDemoAccess";
 import type { Permission } from "../domain/types";
 import AppShell from "./layout/AppShell";
-import { AnnouncementsPage, HomePage, MatchDetailPage, MatchesPage, StandingsPage, StatisticsPage, TeamPage } from "../pages/PublicPages";
-import { CommunityPage, DiscussionPage } from "../pages/CommunityPages";
-import { AuthenticationPage, NotificationsPage, PreferencesPage, ProfilePage } from "../pages/PersonalPages";
-import { AnnouncementManagementPage, LiveConsolePage, ManagerMatchesPage, ManagementHomePage, ModerationPage, RolesManagementPage, ScheduleManagementPage, SettingsPage, SharingPage, SystemAdminPage, TeamsManagementPage } from "../pages/ManagementPages";
 import { EmptyState, PageHeader } from "../pages/shared";
 import styles from "../pages/pages.module.css";
 import { getActiveChampionshipId } from "../services/api";
+
+const AnnouncementsPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.AnnouncementsPage })));
+const HomePage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.HomePage })));
+const MatchDetailPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.MatchDetailPage })));
+const MatchesPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.MatchesPage })));
+const StandingsPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.StandingsPage })));
+const StatisticsPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.StatisticsPage })));
+const TeamPage = lazy(() => import("../pages/PublicPages").then((pages) => ({ default: pages.TeamPage })));
+const CommunityPage = lazy(() => import("../pages/CommunityPages").then((pages) => ({ default: pages.CommunityPage })));
+const DiscussionPage = lazy(() => import("../pages/CommunityPages").then((pages) => ({ default: pages.DiscussionPage })));
+const AuthenticationPage = lazy(() => import("../pages/PersonalPages").then((pages) => ({ default: pages.AuthenticationPage })));
+const NotificationsPage = lazy(() => import("../pages/PersonalPages").then((pages) => ({ default: pages.NotificationsPage })));
+const PreferencesPage = lazy(() => import("../pages/PersonalPages").then((pages) => ({ default: pages.PreferencesPage })));
+const ProfilePage = lazy(() => import("../pages/PersonalPages").then((pages) => ({ default: pages.ProfilePage })));
+const AnnouncementManagementPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.AnnouncementManagementPage })));
+const LiveConsolePage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.LiveConsolePage })));
+const ManagerMatchesPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.ManagerMatchesPage })));
+const ManagementHomePage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.ManagementHomePage })));
+const ModerationPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.ModerationPage })));
+const RolesManagementPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.RolesManagementPage })));
+const ScheduleManagementPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.ScheduleManagementPage })));
+const SettingsPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.SettingsPage })));
+const SharingPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.SharingPage })));
+const SystemAdminPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.SystemAdminPage })));
+const TeamsManagementPage = lazy(() => import("../pages/ManagementPages").then((pages) => ({ default: pages.TeamsManagementPage })));
 
 function PermissionRoute({ permission, children, draftAllowed = false }: { permission: Permission; children: ReactNode; draftAllowed?: boolean }) {
   const { permissions, user } = useDemoAccess();

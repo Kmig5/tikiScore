@@ -20,6 +20,16 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
     @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group"})
     List<Match> findAllByChampionship_IdAndStatusInOrderByStartsAtAsc(UUID championshipId, List<MatchStatus> statuses);
 
+        @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group"})
+        @Query("select m from Match m where m.championship.id = :championshipId "
+            + "and (m.status in :liveStatuses or (m.status = :finishedStatus and m.updatedAt >= :updatedAfter)) "
+            + "order by m.startsAt asc")
+        List<Match> findLiveOrRecentlyFinished(
+            @Param("championshipId") UUID championshipId,
+            @Param("liveStatuses") List<MatchStatus> liveStatuses,
+            @Param("finishedStatus") MatchStatus finishedStatus,
+            @Param("updatedAfter") Instant updatedAfter);
+
     @EntityGraph(attributePaths = {"homeTeam", "awayTeam", "group", "assignedManagers"})
     Optional<Match> findByIdAndChampionship_Id(UUID id, UUID championshipId);
 

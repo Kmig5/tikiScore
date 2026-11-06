@@ -20,7 +20,7 @@ export function useLiveMatchMinute(match?: Match): number {
 
   useEffect(() => {
     if (!isLive || !startedAt) return;
-    const intervalId = window.setInterval(() => setNow(Date.now()), 1_000);
+    const intervalId = window.setInterval(() => setNow(Date.now()), 60_000);
     return () => window.clearInterval(intervalId);
   }, [isLive, startedAt]);
 

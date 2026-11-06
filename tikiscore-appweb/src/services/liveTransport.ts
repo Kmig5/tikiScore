@@ -1,44 +1,58 @@
-import type { MatchEvent } from "../domain/types";
-import { tikiScoreApi } from "./api";
+import type { MatchEvent, MatchStatus } from "../domain/types";
+import { Client, type StompSubscription } from "@stomp/stompjs";
+import { getLiveWebSocketUrl, tikiScoreApi } from "./api";
 
 export type LiveConnectionStatus = "connected" | "reconnecting" | "disconnected";
 
+export interface LiveMatchSnapshot {
+  type: "SCORE_SNAPSHOT";
+  matchId: string;
+  serverTime: string;
+  status: MatchStatus;
+  homeScore: number;
+  awayScore: number;
+  minute: number;
+  version: number;
+}
+
 export interface LiveTransport {
-  connect(matchId: string, onStatus: (status: LiveConnectionStatus) => void, onEvent: (event: MatchEvent) => void): () => void;
+  connect(matchId: string, onStatus: (status: LiveConnectionStatus) => void, onSnapshot: (snapshot: LiveMatchSnapshot) => void): () => void;
   resync(matchId: string): Promise<MatchEvent[]>;
 }
 
 export const apiLiveTransport: LiveTransport = {
   connect(matchId, onStatus, onEvent) {
     let active = true;
-    let cursor = 0;
-    const seen = new Set<string>();
-    let timer = 0;
-
-    async function poll() {
-      if (!active) return;
-      try {
-        const events = await tikiScoreApi.getEvents(matchId, cursor);
-        for (const event of events) {
-          cursor = Math.max(cursor, event.sequence ?? cursor);
-          if (!seen.has(event.id)) {
-            seen.add(event.id);
-            onEvent(event);
-          }
-        }
+    let subscription: StompSubscription | undefined;
+    const client = new Client({
+      brokerURL: getLiveWebSocketUrl(),
+      reconnectDelay: 3_000,
+      heartbeatIncoming: 30_000,
+      heartbeatOutgoing: 30_000,
+      onConnect: () => {
+        if (!active) return;
         onStatus("connected");
-        timer = window.setTimeout(poll, 3_000);
-      } catch {
-        onStatus("reconnecting");
-        timer = window.setTimeout(poll, 5_000);
-      }
-    }
-
+        subscription = client.subscribe(`/topic/matches/${matchId}`, (message) => {
+          try {
+            const snapshot = JSON.parse(message.body) as LiveMatchSnapshot;
+            if (snapshot.type === "SCORE_SNAPSHOT" && snapshot.matchId === matchId) onEvent(snapshot);
+          } catch {
+            onStatus("reconnecting");
+          }
+        });
+      },
+      onStompError: () => onStatus("reconnecting"),
+      onWebSocketClose: () => {
+        if (active) onStatus("reconnecting");
+      },
+      onWebSocketError: () => onStatus("reconnecting"),
+    });
     onStatus("reconnecting");
-    void poll();
+    client.activate();
     return () => {
       active = false;
-      window.clearTimeout(timer);
+      subscription?.unsubscribe();
+      void client.deactivate();
       onStatus("disconnected");
     };
   },

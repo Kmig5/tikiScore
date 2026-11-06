@@ -17,7 +17,6 @@ import com.tikiscore_server.match.dto.MatchEventRequest;
 import com.tikiscore_server.match.dto.MatchEventResponse;
 import com.tikiscore_server.match.dto.MatchResponse;
 import com.tikiscore_server.match.dto.UpdateMatchRequest;
-import com.tikiscore_server.match.live.MatchLiveUpdate;
 import com.tikiscore_server.notification.NotificationService;
 import com.tikiscore_server.notification.NotificationType;
 import com.tikiscore_server.role.RoleName;
@@ -31,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +49,6 @@ public class MatchService {
     private final CompetitionGroupRepository groupRepository;
     private final PlayerRepository playerRepository;
     private final UserRepository userRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final AuditService auditService;
     private final NotificationService notificationService;
     private final ChampionshipMembershipRepository membershipRepository;
@@ -65,7 +62,6 @@ public class MatchService {
             CompetitionGroupRepository groupRepository,
             PlayerRepository playerRepository,
             UserRepository userRepository,
-            ApplicationEventPublisher eventPublisher,
             AuditService auditService,
             NotificationService notificationService,
             ChampionshipMembershipRepository membershipRepository
@@ -78,7 +74,6 @@ public class MatchService {
         this.groupRepository = groupRepository;
         this.playerRepository = playerRepository;
         this.userRepository = userRepository;
-        this.eventPublisher = eventPublisher;
         this.auditService = auditService;
         this.notificationService = notificationService;
         this.membershipRepository = membershipRepository;
@@ -118,6 +113,12 @@ public class MatchService {
     public List<MatchResponse> getLiveMatches() {
         return matchRepository.findAllByChampionship_IdAndStatusInOrderByStartsAtAsc(
                 championatService.getPublicChampionatId(), LIVE_STATUSES).stream().map(MatchResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MatchResponse> getMatchesForLiveSnapshot(Instant finishedSince) {
+        return matchRepository.findLiveOrRecentlyFinished(championatService.getPublicChampionatId(), LIVE_STATUSES,
+                MatchStatus.FINISHED, finishedSince).stream().map(MatchResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -233,7 +234,6 @@ public class MatchService {
         auditService.record(managerId, "MATCH_STATUS_CHANGED", "Match", matchId,
                 current.name() + "->" + target.name());
         notificationService.notifyMatchEvent(saved, event);
-        publish(saved, event);
         return MatchResponse.from(saved);
     }
 
@@ -346,7 +346,6 @@ public class MatchService {
                     request.type().name() + ";sequence=" + savedEvent.getSequence());
         }
         notificationService.notifyMatchEvent(match, savedEvent);
-        publish(match, savedEvent);
         return MatchEventResponse.from(savedEvent);
     }
 
@@ -370,7 +369,6 @@ public class MatchService {
         MatchEvent savedEvent = eventRepository.save(event);
         auditService.record(managerId, "MATCH_EVENT_CANCELLED", "MatchEvent", savedEvent.getId(),
                 "matchId=" + matchId + ";sequence=" + savedEvent.getSequence());
-        publish(match, savedEvent);
         return MatchEventResponse.from(savedEvent);
     }
 
@@ -434,21 +432,7 @@ public class MatchService {
         MatchEvent event = appendEvent(saved, requireUser(actorId), eventType, "schedule-" + UUID.randomUUID());
         auditService.record(actorId, eventType.name(), "Match", matchId, null);
         notificationService.notifyScheduleChange(saved, notificationType);
-        publish(saved, event);
         return MatchResponse.from(saved);
-    }
-
-    private void publish(Match match, MatchEvent event) {
-        MatchEventResponse eventResponse = MatchEventResponse.from(event);
-        eventPublisher.publishEvent(new MatchLiveUpdate(
-                UUID.randomUUID(),
-                event.getState() == MatchEventState.CANCELLED ? "EVENT_CANCELLED" : event.getType().name(),
-                match.getId(),
-                event.getSequence(),
-                Instant.now(),
-                MatchResponse.from(match),
-                eventResponse
-        ));
     }
 
     private void applySchedule(

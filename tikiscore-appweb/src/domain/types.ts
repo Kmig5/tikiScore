@@ -81,6 +81,7 @@ export interface Match {
   homeScore?: number;
   awayScore?: number;
   minute?: number;
+  version?: number;
   assignedManagerIds: string[];
   events: MatchEvent[];
 }

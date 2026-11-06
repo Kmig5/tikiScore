@@ -164,6 +164,8 @@ export function LiveConsolePage() {
 	const { success, error } = useToast();
 	const match = data.matches.find((entry) => entry.id === id);
 	const liveMinute = useLiveMatchMinute(match);
+	const liveMatchId = match?.id;
+	const liveMatchStatus = match?.status;
 	const [teamId, setTeamId] = useState(match?.homeTeamId ?? "");
 	const [playerId, setPlayerId] = useState("");
 	const [relatedPlayerId, setRelatedPlayerId] = useState("");
@@ -177,11 +179,13 @@ export function LiveConsolePage() {
 	const canManage = hasPermission(permissions, "match:manage:assigned") && Boolean(match && (match.assignedManagerIds.includes(user?.id ?? "") || hasPermission(permissions, "competition:manage")));
 	const availablePlayers = useMemo(() => data.players.filter((player) => player.teamId === teamId), [data.players, teamId]);
 	useEffect(() => {
-		if (!match || (match.status !== "live" && match.status !== "halftime")) return;
-		return apiLiveTransport.connect(match.id, setLiveConnection, () => {
-			void tikiScoreService.refreshMatch(match.id).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de synchroniser la rencontre."));
-		});
-	}, [error, match]);
+		if (!liveMatchId || liveMatchStatus === "finished" || liveMatchStatus === "cancelled") return;
+		return apiLiveTransport.connect(liveMatchId, setLiveConnection, tikiScoreService.applyLiveSnapshot);
+	}, [liveMatchId, liveMatchStatus]);
+	useEffect(() => {
+		if (!id) return;
+		void tikiScoreService.refreshMatch(id).catch((cause: unknown) => error(cause instanceof Error ? cause.message : "Impossible de charger la rencontre."));
+	}, [error, id]);
 
 	if (!match) return <div className={styles.page}><PageHeader title="Match introuvable" /><EmptyState title="Rencontre introuvable" body="La rencontre n’existe pas ou n’est plus disponible." /></div>;
 	if (!canManage) return <div className={styles.page}><PageHeader eyebrow="Console terrain" title="Accès non autorisé" /><PermissionNotice permission="match:manage:assigned" /></div>;

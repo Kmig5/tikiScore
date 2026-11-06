@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Bell, LogOut, Share2, Volleyball } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDemoAccess } from "../useDemoAccess";
@@ -6,6 +7,7 @@ import { hasPermission } from "../../domain/permissions";
 import { useTikiScoreData, useTikiScoreStatus } from "../hooks";
 import { tikiScoreService } from "../../services/tikiScoreService";
 import { getActiveChampionshipId } from "../../services/api";
+import Loader from "../../composants/ui/Loader/Loader";
 import Select from "../../composants/ui/Select";
 import styles from "./AppShell.module.css";
 
@@ -21,6 +23,7 @@ export default function AppShell() {
   const mobileNavigation = visibleNavigation.filter((item) => item.primary);
   const unreadCount = data.notifications.filter((notification) => !notification.read).length;
   const isManagement = location.pathname.startsWith("/gestion");
+  const isInitialLoading = dataStatus.state === "loading" && !data.championship.id;
 
   return (
     <div className={styles.application}>
@@ -73,7 +76,14 @@ export default function AppShell() {
           {dataStatus.state !== "ready" && <div className={`${styles.apiNotice} ${dataStatus.state === "error" ? styles.apiError : ""}`} role={dataStatus.state === "error" ? "alert" : "status"}>
             <span>{dataStatus.message}</span>{dataStatus.state === "error" && <button type="button" onClick={() => { void tikiScoreService.refresh(); }}>Réessayer</button>}
           </div>}
-          {isSwitchingChampionship ? <div className={styles.apiNotice} role="status">Chargement du championnat…</div> : <Outlet />}
+          {isSwitchingChampionship || isInitialLoading ? <div className={styles.pageLoading}>
+            <Loader variant="dots" size="large" label={isSwitchingChampionship ? "Chargement du championnat…" : "Préparation du championnat…"} />
+            <div className={styles.loadingSkeleton} aria-hidden="true">
+              <span className={styles.skeletonTitle} />
+              <span className={styles.skeletonLine} />
+              <div className={styles.skeletonGrid}><span /><span /><span /></div>
+            </div>
+          </div> : <Suspense fallback={<div className={styles.pageLoading}><Loader variant="dots" label="Chargement de la page…" /></div>}><Outlet /></Suspense>}
         </main>
       </div>
 

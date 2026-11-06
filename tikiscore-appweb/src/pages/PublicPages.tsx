@@ -192,16 +192,20 @@ export function MatchDetailPage() {
   const { permissions, user } = useDemoAccess();
   const { success, error } = useToast();
   const match = data.matches.find((candidate) => candidate.id === matchId);
+  const liveMatchId = match?.id;
+  const liveMatchStatus = match?.status;
   const liveMinute = useLiveMatchMinute(match);
   const [liveConnection, setLiveConnection] = useState<LiveConnectionStatus>("disconnected");
   const [ratings, setRatings] = useState<MatchRatingData | null>(null);
   const [savingRatingFor, setSavingRatingFor] = useState<string | null>(null);
   useEffect(() => {
-    if (!match || (match.status !== "live" && match.status !== "halftime")) return;
-    return apiLiveTransport.connect(match.id, setLiveConnection, () => {
-      void tikiScoreService.refreshMatch(match.id).catch((error: unknown) => console.error("Impossible de synchroniser le match.", error));
-    });
-  }, [match]);
+    if (!liveMatchId || liveMatchStatus === "finished" || liveMatchStatus === "cancelled") return;
+    return apiLiveTransport.connect(liveMatchId, setLiveConnection, tikiScoreService.applyLiveSnapshot);
+  }, [liveMatchId, liveMatchStatus]);
+  useEffect(() => {
+    if (!matchId) return;
+    void tikiScoreService.refreshMatch(matchId).catch((cause: unknown) => console.error("Impossible de charger le match.", cause));
+  }, [matchId]);
   const matchStatus = match?.status;
   useEffect(() => {
     if (!matchStatus) return;

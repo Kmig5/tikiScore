@@ -1,5 +1,6 @@
 import { tikiScoreApi } from "./api";
 import type { Announcement, MatchEventInput, Player, Team, TikiScoreData } from "../domain/types";
+import type { LiveMatchSnapshot } from "./liveTransport";
 
 export type DataStatus =
   | { state: "loading"; message: string }
@@ -9,10 +10,10 @@ export type DataStatus =
 export interface ServiceMode {
   kind: "api";
   persistent: true;
-  liveConnected: false;
+  liveConnected: true;
 }
 
-const mode: ServiceMode = { kind: "api", persistent: true, liveConnected: false };
+const mode: ServiceMode = { kind: "api", persistent: true, liveConnected: true };
 let state: TikiScoreData = {
   championship: { id: "", name: "", edition: "", description: "", locality: "", startDate: "", endDate: "", publicUrl: "/", format: "" },
   groups: [], teams: [], players: [], matches: [], standings: [], leaderboard: [],
@@ -35,6 +36,19 @@ function notifyStatus(): void {
 function setStatus(next: DataStatus): void {
   status = next;
   notifyStatus();
+}
+
+function updateMatch(matchId: string, update: (match: TikiScoreData["matches"][number]) => TikiScoreData["matches"][number]): void {
+  state = { ...state, matches: state.matches.map((match) => match.id === matchId ? update(match) : match) };
+  notify();
+}
+
+function applyMatchResponse(matchId: string, updatedMatch: TikiScoreData["matches"][number]): void {
+  updateMatch(matchId, (current) => ({
+    ...updatedMatch,
+    assignedManagerIds: current.assignedManagerIds,
+    events: current.events,
+  }));
 }
 
 async function refresh(): Promise<void> {
@@ -95,16 +109,39 @@ export const tikiScoreService = {
   getNotifications: () => state.notifications,
   getDiscussions: () => state.discussions,
 
+  applyLiveSnapshot(snapshot: LiveMatchSnapshot): void {
+    updateMatch(snapshot.matchId, (match) => {
+      if ((match.version ?? -1) > snapshot.version) return match;
+      return {
+        ...match,
+        status: snapshot.status as typeof match.status,
+        homeScore: snapshot.homeScore,
+        awayScore: snapshot.awayScore,
+        minute: snapshot.minute,
+        version: snapshot.version,
+      };
+    });
+  },
   async appendMatchEvent(matchId: string, input: MatchEventInput): Promise<void> {
-    await mutate(() => tikiScoreApi.recordEvent(matchId, input));
+    const event = await tikiScoreApi.recordEvent(matchId, input);
+    updateMatch(matchId, (match) => ({
+      ...match,
+      homeScore: event.homeScoreAfter,
+      awayScore: event.awayScoreAfter,
+      events: [...match.events.filter((candidate) => candidate.id !== event.id), event]
+        .sort((left, right) => (left.sequence ?? 0) - (right.sequence ?? 0)),
+    }));
   },
   async refreshMatch(matchId: string): Promise<void> {
     const updatedMatch = await tikiScoreApi.getMatch(matchId);
-    state = { ...state, matches: state.matches.map((match) => match.id === matchId ? updatedMatch : match) };
+    state = { ...state, matches: state.matches.map((match) => match.id === matchId
+      ? { ...updatedMatch, assignedManagerIds: match.assignedManagerIds }
+      : match) };
     notify();
   },
   async removeMatchEvent(matchId: string, eventId: string): Promise<void> {
-    await mutate(() => tikiScoreApi.cancelEvent(matchId, eventId));
+    await tikiScoreApi.cancelEvent(matchId, eventId);
+    await this.refreshMatch(matchId);
   },
   async setDiscussionState(discussionId: string, update: { pinned?: boolean; closed?: boolean; hidden?: boolean }): Promise<void> {
     await mutate(() => tikiScoreApi.updateForumState(discussionId, update));
@@ -148,8 +185,8 @@ export const tikiScoreService = {
   async updateManagerAssignment(matchId: string, managerIds: string[]): Promise<void> {
     await mutate(() => tikiScoreApi.assignManagers(matchId, managerIds));
   },
-  async startMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.startMatch(matchId)); },
-  async halfTime(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.halfTime(matchId)); },
-  async resumeMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.resumeMatch(matchId)); },
-  async finishMatch(matchId: string): Promise<void> { await mutate(() => tikiScoreApi.finishMatch(matchId)); },
+  async startMatch(matchId: string): Promise<void> { applyMatchResponse(matchId, await tikiScoreApi.startMatch(matchId)); },
+  async halfTime(matchId: string): Promise<void> { applyMatchResponse(matchId, await tikiScoreApi.halfTime(matchId)); },
+  async resumeMatch(matchId: string): Promise<void> { applyMatchResponse(matchId, await tikiScoreApi.resumeMatch(matchId)); },
+  async finishMatch(matchId: string): Promise<void> { applyMatchResponse(matchId, await tikiScoreApi.finishMatch(matchId)); },
 };

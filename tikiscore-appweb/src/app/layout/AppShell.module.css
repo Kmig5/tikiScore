@@ -35,6 +35,13 @@
 .apiNotice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding: 11px 13px; border: 1px solid #c8dfd2; border-radius: 6px; background: #f0f8f3; color: #09663b; font-size: 12px; }
 .apiNotice button { min-height: 40px; padding: 0 10px; border: 1px solid currentColor; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: 650; cursor: pointer; }
 .apiError { border-color: #efb5bd; background: #fff2f3; color: #a61d32; }
+.pageLoading { display: flex; min-height: min(62svh, 560px); flex-direction: column; gap: 30px; padding: 24px 0; }
+.loadingSkeleton { display: grid; gap: 14px; width: min(100%, 840px); }
+.loadingSkeleton > span, .skeletonGrid > span { display: block; border-radius: 6px; background: #e3ebe6; }
+.skeletonTitle { width: min(48%, 340px); height: 28px; }
+.skeletonLine { width: min(70%, 520px); height: 14px; }
+.skeletonGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 10px; }
+.skeletonGrid > span { min-height: 150px; }
 .mobileNavigation { display: none; }
 :global([data-theme="dark"]) .application { background: #0b110e; color: #edf4ef; }
 :global([data-theme="dark"]) .header, :global([data-theme="dark"]) .sidebar { background: #131c17; border-color: #34443a; }
@@ -57,6 +64,7 @@
 :global([data-theme="dark"]) .managementMain { background: #0b110e; }
 :global([data-theme="dark"]) .apiNotice { border-color: #3e7355; background: #1c3929; color: #74d69f; }
 :global([data-theme="dark"]) .apiError { border-color: #71323a; background: #321b20; color: #fb7185; }
+:global([data-theme="dark"]) .loadingSkeleton > span, :global([data-theme="dark"]) .skeletonGrid > span { background: #1e2d24; }
 @media (max-width: 1023px) {
   .header { min-height: 62px; padding: 0 18px; }
   .body { min-height: calc(100svh - 62px); }
@@ -77,6 +85,8 @@
   .userName { display: none; }
   .main { padding: 14px 14px calc(88px + env(safe-area-inset-bottom)); }
   .demoNotice { align-items: flex-start; margin-bottom: 16px; font-size: 11px; }
+  .skeletonGrid { grid-template-columns: 1fr; }
+  .skeletonGrid > span { min-height: 116px; }
 }
 @media (max-width: 360px) {
   .brandName { font-size: 16px; }

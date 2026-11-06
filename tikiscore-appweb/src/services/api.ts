@@ -7,6 +7,14 @@ const csrfHeader = "X-XSRF-TOKEN";
 let authenticatedUser: AuthenticatedUser | null = null;
 let activeChampionshipId: string | null = localStorage.getItem("tikiscore.activeChampionshipId");
 
+export function getLiveWebSocketUrl(): string {
+  const apiUrl = new URL(apiBase, window.location.origin);
+  apiUrl.protocol = apiUrl.protocol === "https:" ? "wss:" : "ws:";
+  apiUrl.pathname = "/ws";
+  apiUrl.search = "";
+  return apiUrl.toString();
+}
+
 export function getActiveChampionshipId(): string | null {
   return activeChampionshipId;
 }
@@ -59,6 +67,11 @@ export interface MatchRatingData {
   ratingsOpen: boolean;
   resultsVisible: boolean;
   players: MatchRatingPlayer[];
+}
+
+export interface RecordedMatchEvent extends MatchEvent {
+  homeScoreAfter: number;
+  awayScoreAfter: number;
 }
 
 interface TokenResponse {
@@ -153,7 +166,7 @@ function mapEvent(event: EventDto, matchId: string): MatchEvent {
 }
 
 function mapMatch(dto: MatchDto, events: MatchEvent[] = []): Match {
-  return { id: dto.id, groupId: dto.groupId ?? "", homeTeamId: dto.homeTeamId, awayTeamId: dto.awayTeamId, startsAt: dto.startsAt, venue: dto.venue ?? "", status: dto.status, homeScore: dto.homeScore, awayScore: dto.awayScore, minute: dto.minute, assignedManagerIds: [], events };
+  return { id: dto.id, groupId: dto.groupId ?? "", homeTeamId: dto.homeTeamId, awayTeamId: dto.awayTeamId, startsAt: dto.startsAt, venue: dto.venue ?? "", status: dto.status, homeScore: dto.homeScore, awayScore: dto.awayScore, minute: dto.minute, version: dto.version, assignedManagerIds: [], events };
 }
 
 function mapChampionship(dto: CompetitionDto): Championship {
@@ -268,8 +281,7 @@ export const tikiScoreApi = {
     ]);
     const playersPerTeam = await Promise.all(teams.map((team) => request<PlayerDto[]>(`/public/teams/${team.id}/players`)));
     const players = playersPerTeam.flat();
-    const eventsPerMatch = await Promise.all(matchDtos.map((match) => request<EventDto[]>(`/public/matches/${match.id}/events`)));
-    const matches = matchDtos.map((match, index) => mapMatch(match, eventsPerMatch[index].filter((event) => event.state === "ACTIVE").map((event) => mapEvent(event, match.id))));
+    const matches = matchDtos.map((match) => mapMatch(match));
     const leaderboardByPlayer = new Map<string, LeaderboardEntry>();
     for (const row of [...scorers, ...assists, ...cards]) {
       const existing = leaderboardByPlayer.get(row.playerId) ?? { playerId: row.playerId, teamId: row.teamId, goals: 0, assists: 0, yellowCards: 0, redCards: 0 };
@@ -294,9 +306,8 @@ export const tikiScoreApi = {
     const assignedDtos = hasMatchPermission
       ? await request<MatchDto[]>("/match-manager/matches")
       : [];
-    const assignedEventLists = await Promise.all(assignedDtos.map((match) => this.getEvents(match.id)));
-    const matches = assignedDtos.map((match, index) => ({
-      ...mapMatch(match, assignedEventLists[index]),
+    const matches = assignedDtos.map((match) => ({
+      ...mapMatch(match),
       assignedManagerIds: authenticatedUser ? [authenticatedUser.id] : [],
     }));
     return { notifications, reports, ...(hasMatchPermission ? { matches } : {}) };
@@ -365,14 +376,15 @@ export const tikiScoreApi = {
     const events = await request<EventDto[]>(`/public/matches/${matchId}/events?afterSequence=${afterSequence}`);
     return events.filter((event) => event.state === "ACTIVE").map((event) => mapEvent(event, matchId));
   },
-  async startMatch(id: string): Promise<void> { await request(`/match-manager/matches/${id}/start`, { method: "POST" }); },
-  async halfTime(id: string): Promise<void> { await request(`/match-manager/matches/${id}/half-time`, { method: "POST" }); },
-  async resumeMatch(id: string): Promise<void> { await request(`/match-manager/matches/${id}/resume`, { method: "POST" }); },
-  async pauseMatch(id: string): Promise<void> { await request(`/match-manager/matches/${id}/pause`, { method: "POST" }); },
-  async finishMatch(id: string): Promise<void> { await request(`/match-manager/matches/${id}/finish`, { method: "POST" }); },
-  async recordEvent(matchId: string, event: MatchEventInput): Promise<void> {
+  async startMatch(id: string): Promise<Match> { return mapMatch(await request<MatchDto>(`/match-manager/matches/${id}/start`, { method: "POST" })); },
+  async halfTime(id: string): Promise<Match> { return mapMatch(await request<MatchDto>(`/match-manager/matches/${id}/half-time`, { method: "POST" })); },
+  async resumeMatch(id: string): Promise<Match> { return mapMatch(await request<MatchDto>(`/match-manager/matches/${id}/resume`, { method: "POST" })); },
+  async pauseMatch(id: string): Promise<Match> { return mapMatch(await request<MatchDto>(`/match-manager/matches/${id}/pause`, { method: "POST" })); },
+  async finishMatch(id: string): Promise<Match> { return mapMatch(await request<MatchDto>(`/match-manager/matches/${id}/finish`, { method: "POST" })); },
+  async recordEvent(matchId: string, event: MatchEventInput): Promise<RecordedMatchEvent> {
     const types: Record<MatchEventInput["type"], string> = { goal: "goal", yellowCard: "yellowCard", redCard: "redCard", substitution: "substitution", periodStart: "periodStart", halftime: "halftime", periodResume: "periodResume", fullTime: "fullTime" };
-    await request(`/match-manager/matches/${matchId}/events`, { method: "POST", body: JSON.stringify({ clientEventId: crypto.randomUUID(), type: types[event.type], minute: event.minute, addedTime: 0, teamId: event.teamId ?? null, playerId: event.playerId ?? null, relatedPlayerId: event.relatedPlayerId ?? null }) });
+    const saved = await request<EventDto>(`/match-manager/matches/${matchId}/events`, { method: "POST", body: JSON.stringify({ clientEventId: crypto.randomUUID(), type: types[event.type], minute: event.minute, addedTime: 0, teamId: event.teamId ?? null, playerId: event.playerId ?? null, relatedPlayerId: event.relatedPlayerId ?? null }) });
+    return { ...mapEvent(saved, matchId), homeScoreAfter: saved.homeScoreAfter, awayScoreAfter: saved.awayScoreAfter };
   },
   async cancelEvent(matchId: string, eventId: string): Promise<void> { await request(`/match-manager/matches/${matchId}/events/${eventId}/cancel`, { method: "POST" }); },
   async createDiscussion(categoryId: string, title: string, body: string): Promise<Discussion> {
