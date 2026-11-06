@@ -32,7 +32,7 @@ public class ShareService {
             AuditService auditService,
             ChampionatService championatService,
             @Value("${TIKISCORE_PUBLIC_URL:/}") String publicUrl,
-            @Value("${TIKISCORE_SHARE_REDIRECT_URL:http://localhost:8080/r/championnat}") String redirectUrl
+            @Value("${TIKISCORE_SHARE_REDIRECT_URL:http://192.168.2.9:8080/r/championnat}") String redirectUrl
     ) {
         this.storage = storage;
         this.auditService = auditService;

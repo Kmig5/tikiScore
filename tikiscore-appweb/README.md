@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## Thèmes et liens de partage
+
+Le choix du thème (clair, sombre ou système) est enregistré dans le stockage local du navigateur et appliqué dès le démarrage de l’application.
+
+En développement, Vite écoute sur toutes les interfaces réseau et les liens de partage utilisent l’adresse IPv4 locale détectée. Si plusieurs interfaces réseau sont actives, définissez `VITE_PUBLIC_ORIGIN` dans `.env.local` (par exemple `http://192.168.1.20:5173`). Les appels `/api` et `/r` sont relayés vers le serveur local sur le port 8080.
+
+En production, les liens utilisent l’origine DNS depuis laquelle l’application est consultée. Configurez également `FRONTEND_PUBLIC_URL` côté serveur avec cette URL publique.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

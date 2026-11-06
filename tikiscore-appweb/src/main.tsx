@@ -5,6 +5,9 @@ import './styles/global.css'
 import App from './App.tsx'
 import { ToastProvider } from './contexts/ToastContext.tsx'
 import { DemoAccessProvider } from './app/DemoAccessContext.tsx'
+import { initializeTheme } from './app/theme.ts'
+
+initializeTheme()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

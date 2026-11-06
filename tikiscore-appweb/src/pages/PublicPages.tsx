@@ -6,6 +6,7 @@ import Button from "../composants/ui/Button";
 import Select from "../composants/ui/Select";
 import { useDemoAccess } from "../app/useDemoAccess";
 import { useLiveMatchMinute, useTikiScoreData } from "../app/hooks";
+import { resolvePublicUrl } from "../app/publicUrl";
 import { apiLiveTransport, type LiveConnectionStatus } from "../services/liveTransport";
 import { tikiScoreService } from "../services/tikiScoreService";
 import type { MatchStatus, PlayerPosition } from "../domain/types";
@@ -69,7 +70,7 @@ export function HomePage({ createOnly = false }: { createOnly?: boolean }) {
   }
 
   async function shareChampionship() {
-    const url = new URL(data.championship.publicUrl, window.location.origin).toString();
+    const url = resolvePublicUrl(data.championship.publicUrl);
     if (navigator.share) {
       try {
         await navigator.share({ title: data.championship.name, text: `Suivez ${data.championship.name}`, url });
@@ -200,7 +201,7 @@ export function MatchDetailPage() {
     return apiLiveTransport.connect(match.id, setLiveConnection, () => {
       void tikiScoreService.refreshMatch(match.id).catch((error: unknown) => console.error("Impossible de synchroniser le match.", error));
     });
-  }, [match?.id, match?.status]);
+  }, [match]);
   const matchStatus = match?.status;
   useEffect(() => {
     if (!matchStatus) return;

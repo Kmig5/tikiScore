@@ -43,6 +43,7 @@
 :global([data-theme="dark"]) .userName { color: #b9c8bf; }
 :global([data-theme="dark"]) .signInLink, :global([data-theme="dark"]) .signOutButton { border-color: #3e7355; color: #74d69f; }
 :global([data-theme="dark"]) .headerIcon { color: #b9c8bf; }
+:global([data-theme="dark"]) .headerIcon:hover { background: #18231d; }
 :global([data-theme="dark"]) .notificationBadge { border-color: #131c17; }
 :global([data-theme="dark"]) .championshipBlock { border-color: #34443a; }
 :global([data-theme="dark"]) .championshipBlock strong { color: #edf4ef; }
@@ -52,6 +53,8 @@
 :global([data-theme="dark"]) .active { background: #1c3929; color: #74d69f; }
 :global([data-theme="dark"]) .managementNav { border-color: #34443a; }
 :global([data-theme="dark"]) .shareLink { border-color: #3e7355; color: #74d69f; }
+:global([data-theme="dark"]) .shareLink:hover { background: #1c3929; }
+:global([data-theme="dark"]) .managementMain { background: #0b110e; }
 :global([data-theme="dark"]) .apiNotice { border-color: #3e7355; background: #1c3929; color: #74d69f; }
 :global([data-theme="dark"]) .apiError { border-color: #71323a; background: #321b20; color: #fb7185; }
 @media (max-width: 1023px) {

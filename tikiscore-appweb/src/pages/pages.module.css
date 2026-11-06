@@ -231,6 +231,11 @@
 :global([data-theme="dark"]) .ratingStar { color: #78867d; }
 :global([data-theme="dark"]) .ratingStar[aria-pressed="true"], :global([data-theme="dark"]) .ratingStar:hover:not(:disabled) { color: #f0ad3d; }
 :global([data-theme="dark"]) .ratingResult > span { color: #f0ad3d; }
+:global([data-theme="dark"]) .metric span, :global([data-theme="dark"]) .positionLabel, :global([data-theme="dark"]) .ratingResult { color: #b9c8bf; }
+:global([data-theme="dark"]) .timelineItem { color: #d4e0d8; }
+:global([data-theme="dark"]) .timelineMinute { color: #74d69f; }
+:global([data-theme="dark"]) .timelineDot::after { background: #34443a; }
+:global([data-theme="dark"]) .dataTable th { color: #8f9f96; }
 :global([data-theme="dark"]) .qrFrame { border-color: #34443a; }
 :global([data-theme="dark"]) .qrPanel .publicUrl { color: #b9c8bf; }
 :global([data-theme="dark"]) .fieldLabel { color: #d4e0d8; }

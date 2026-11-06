@@ -18,8 +18,13 @@ html {
   line-height: var(--line-height-normal);
   color: var(--color-text);
   background-color: var(--color-background);
+  color-scheme: light;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {

@@ -1,6 +1,7 @@
 import type { Announcement, Championship, ChampionshipNotification, ChampionshipStatistics, Discussion, DiscussionReply, ForumReport, Group, LeaderboardEntry, Match, MatchEvent, MatchEventInput, MatchStatus, Player, PlayerPosition, Standing, Team, TikiScoreData } from "../domain/types";
+import { getChampionshipPublicUrl } from "../app/publicUrl";
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+const apiBase = import.meta.env.VITE_API_BASE_URL || "/api";
 let accessToken: string | null = null;
 const csrfHeader = "X-XSRF-TOKEN";
 let authenticatedUser: AuthenticatedUser | null = null;
@@ -156,9 +157,7 @@ function mapMatch(dto: MatchDto, events: MatchEvent[] = []): Match {
 }
 
 function mapChampionship(dto: CompetitionDto): Championship {
-  const publicUrl = new URL(dto.publicUrl || "/", window.location.origin);
-  publicUrl.searchParams.set("championship", dto.slug);
-  return { id: dto.id, name: dto.name, edition: dto.edition, description: dto.description, locality: dto.locality, startDate: dto.startDate, endDate: dto.endDate, publicUrl: publicUrl.toString(), format: dto.format };
+  return { id: dto.id, name: dto.name, edition: dto.edition, description: dto.description, locality: dto.locality, startDate: dto.startDate, endDate: dto.endDate, publicUrl: getChampionshipPublicUrl(dto.publicUrl, dto.slug), format: dto.format };
 }
 
 function mapDiscussion(dto: DiscussionDto): Discussion {
@@ -281,7 +280,7 @@ export const tikiScoreApi = {
       ...emptyData(), groups, teams, players,
       matches, standings: standingDtos, leaderboard: [...leaderboardByPlayer.values()], statistics,
       announcements: mappedAnnouncements, discussions: discussionsPage.content.map(mapDiscussion), forumPublic: competition.forumPublic,
-      forumCategories, championship: { ...mapChampionship(competition), publicUrl: share.publicUrl },
+      forumCategories, championship: { ...mapChampionship(competition), publicUrl: getChampionshipPublicUrl(share.publicUrl, competition.slug) },
     };
   },
   async getPrivateData(): Promise<Pick<TikiScoreData, "notifications" | "reports"> & { matches?: Match[] }> {
